@@ -423,14 +423,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
       </div>
     </div>
     <!-- column header -->
-    <div class="tbl-head" style="grid-template-columns:28px 1fr 90px 110px 110px 100px 80px 34px">
+    <div class="tbl-head" style="grid-template-columns:28px 1fr 110px 110px 110px 110px 100px 80px 50px 34px">
       <div style="text-align:center">Due</div>
       <div>Payout</div>
       <div style="text-align:center">Frequency</div>
+      <div style="text-align:center">Payment Method</div>
       <div style="text-align:right">Monthly Budget</div>
       <div style="text-align:right">This Month · YTD</div>
       <div style="text-align:right">Annual Remaining</div>
       <div style="text-align:right">YTD Used %</div>
+      <div style="text-align:center">Actions</div>
       <div></div>
     </div>
     <div id="cpRows"></div>
@@ -782,15 +784,28 @@ function syncMobile(){
    COMMITTED PAYOUTS — state
 ══════════════════════════════════════════════ */
 /* Each item: {id, name, sub, dayOfMonth, budget, active, startMonth (0-11), startFY} */
+/* Frequency: 'monthly'|'quarterly'|'halfyearly'|'yearly' */
+/* payMethod: any string from CP_PAY_METHODS or custom */
+const CP_FREQ = ['Monthly','Quarterly','Half-Yearly','Yearly'];
+const CP_FREQ_VALS = ['monthly','quarterly','halfyearly','yearly'];
+/* Months in which a non-monthly item is due (0=Apr,1=May...) */
+const CP_FREQ_MONTHS = {
+  monthly:    [0,1,2,3,4,5,6,7,8,9,10,11],
+  quarterly:  [0,3,6,9],
+  halfyearly: [0,6],
+  yearly:     [0],
+};
+let CP_PAY_METHODS = LS('fp_cp_paymethods') || ['HDFC CC','RBL CC','OneCard','Bank Debit','Amazon Pay Later','NEFT/Transfer','Cash','Others'];
+
 const DEF_COMMITTED = [
-  {id:'cp1', name:'House Loan EMI',       sub:'HDFC Bank',          dayOfMonth:5,  budget:81000, active:true,  startMonth:0, startFY:'FY25-26'},
-  {id:'cp2', name:'Rent',                 sub:'Monthly transfer',   dayOfMonth:1,  budget:36667, active:true,  startMonth:0, startFY:'FY25-26'},
-  {id:'cp3', name:'Sukanya Samriddhi',    sub:'HDFC — annual SIP',  dayOfMonth:10, budget:12500, active:true,  startMonth:0, startFY:'FY25-26'},
-  {id:'cp4', name:'MF SIP — PAYTM',      sub:'20K monthly SIP',    dayOfMonth:7,  budget:20000, active:true,  startMonth:0, startFY:'FY25-26'},
-  {id:'cp5', name:'NPS Contribution',     sub:'ICICI — pension',    dayOfMonth:10, budget:5000,  active:true,  startMonth:0, startFY:'FY25-26'},
-  {id:'cp6', name:'School Fees',          sub:'Quarterly payment',  dayOfMonth:15, budget:8000,  active:true,  startMonth:0, startFY:'FY25-26'},
-  {id:'cp7', name:'Bank Direct Debits',   sub:'Auto-debit pool',    dayOfMonth:3,  budget:11240, active:true,  startMonth:0, startFY:'FY25-26'},
-  {id:'cp8', name:'Insurance Premium',    sub:'Annual / monthly',   dayOfMonth:20, budget:5000,  active:true,  startMonth:0, startFY:'FY25-26'},
+  {id:'cp1',name:'House Loan EMI',     sub:'HDFC Bank',        dayOfMonth:5,  budget:81000, freq:'monthly',    payMethod:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp2',name:'Rent',               sub:'Monthly transfer', dayOfMonth:1,  budget:36667, freq:'monthly',    payMethod:'NEFT/Transfer', active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp3',name:'Sukanya Samriddhi',  sub:'HDFC Bank',        dayOfMonth:10, budget:12500, freq:'monthly',    payMethod:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp4',name:'MF SIP — PAYTM',    sub:'20K monthly SIP',  dayOfMonth:7,  budget:20000, freq:'monthly',    payMethod:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp5',name:'NPS Contribution',   sub:'ICICI — pension',  dayOfMonth:10, budget:5000,  freq:'monthly',    payMethod:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp6',name:'School Fees',        sub:'Quarterly',        dayOfMonth:15, budget:8000,  freq:'quarterly',  payMethod:'HDFC CC',       active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp7',name:'Bank Direct Debits', sub:'Auto-debit pool',  dayOfMonth:3,  budget:11240, freq:'monthly',    payMethod:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp8',name:'Insurance Premium',  sub:'Annual premium',   dayOfMonth:20, budget:5000,  freq:'yearly',     payMethod:'HDFC CC',       active:true,startMonth:0,startFY:'FY25-26'},
 ];
 
 let cpItems   = LS('fp_cp_items')   || JSON.parse(JSON.stringify(DEF_COMMITTED));
@@ -1024,111 +1039,165 @@ function renderFYTrend(){
    COMMITTED PAYOUTS — renderer
 ══════════════════════════════════════════════ */
 function renderCommitted(){
-  const fy=currentFY, m=currentMonth, months=FY_MONTHS[fy];
-  const mlEl=document.getElementById('cpml');
-  // page header month label (not required but nice)
+  const fy=currentFY, m=currentMonth;
 
-  // Sort items by dayOfMonth ascending (due date order for the month)
+  /* Sort by dayOfMonth — items due soonest in the month appear first */
   const sorted=[...cpItems].filter(h=>h.active!==false).sort((a,b)=>a.dayOfMonth-b.dayOfMonth);
 
-  // completion
+  /* Completion bar */
   let done=0;
-  sorted.forEach(h=>{if(getCpC(fy,h.id,m))done++;});
+  sorted.forEach(h=>{ if(getCpC(fy,h.id,m)) done++; });
   const pct=sorted.length?Math.round(done/sorted.length*100):0;
   const cb=document.getElementById('cpCompBar');
   const ct=document.getElementById('cpCompTxt');
-  if(cb)cb.style.width=pct+'%';
-  if(ct)ct.textContent=`${done}/${sorted.length} paid this month`;
+  if(cb) cb.style.width=pct+'%';
+  if(ct) ct.textContent=`${done}/${sorted.length} paid this month`;
 
   const rowEl=document.getElementById('cpRows');
-  if(!rowEl)return;
+  if(!rowEl) return;
 
-  const GC='28px 1fr 90px 110px 110px 100px 80px 34px';
+  /* 10-column grid: due | name | freq | payMethod | budget | actual | diff | pct | actions | check */
+  const GC='28px 1fr 110px 110px 110px 110px 100px 80px 50px 34px';
+
+  const today=new Date().getDate();
+  const freqColors={'monthly':'var(--accent)','quarterly':'#7c3aed','halfyearly':'#ea580c','yearly':'#dc2626'};
+  const pmColors={'HDFC CC':'#1d4ed8','RBL CC':'#6d28d9','OneCard':'#047857','Bank Debit':'#0f766e',
+                  'NEFT/Transfer':'#1e40af','Amazon Pay Later':'#b45309','Cash':'#374151','Others':'#6b7280'};
 
   let html='';
   sorted.forEach((h,idx)=>{
+    const freq      = h.freq||'monthly';
+    const pm        = h.payMethod||'Others';
+    /* For non-monthly items, budget applies only in due months */
+    const dueMonths = CP_FREQ_MONTHS[freq]||CP_FREQ_MONTHS.monthly;
+    const isDueThisMonth = dueMonths.includes(m);
     const monthActual = getCpA(fy,h.id,m);
-    const annBudget   = (h.budget||0)*12;
+    /* Annual budget = budget × number of due months per year */
+    const annBudget   = (h.budget||0)*dueMonths.length;
     let ytdActual=0;
     for(let mm=0;mm<=m;mm++) ytdActual+=getCpA(fy,h.id,mm);
-    const done = getCpC(fy,h.id,m);
-    const p    = annBudget>0?Math.min(ytdActual/annBudget*100,150):0;
-    const barColor = ytdActual>annBudget?'var(--red)':'var(--green)';
-    const diff = annBudget-ytdActual;
-    const ds   = annBudget===0?'—':(diff>=0?'+'+fmt(diff):fmt(diff));
-    const dc   = diff>=0?'var(--green)':'var(--red)';
-    const pctColor = p>100?'var(--red)':p>80?'var(--yellow)':'var(--muted2)';
-    // due date badge colour: due today or past = red, upcoming = green, far = muted
-    const today = new Date().getDate();
-    const dayColor = h.dayOfMonth<today?'var(--red)':h.dayOfMonth===today?'var(--accent)':'var(--green)';
+    const isDone = getCpC(fy,h.id,m);
+    const p      = annBudget>0?Math.min(ytdActual/annBudget*100,150):0;
+    const barCol = ytdActual>annBudget?'var(--red)':'var(--green)';
+    const diff   = annBudget-ytdActual;
+    const ds     = annBudget===0?'—':(diff>=0?'+'+fmt(diff):fmt(diff));
+    const dc     = diff>=0?'var(--green)':'var(--red)';
+    const pctCol = p>100?'var(--red)':p>80?'var(--yellow)':'var(--muted2)';
+    const dayCol = h.dayOfMonth<today?'var(--red)':h.dayOfMonth===today?'var(--accent)':'var(--green)';
 
-    html+=`<div class="tbl-row ${done?'done':''}" id="cpr_${fy}_${h.id}" style="grid-template-columns:${GC}">
+    /* Frequency dropdown */
+    const freqOpts=CP_FREQ_VALS.map((f,fi)=>
+      `<option value="${f}"${f===freq?' selected':''}>${CP_FREQ[fi]}</option>`).join('');
+
+    /* Payment method dropdown — includes custom methods */
+    const pmOpts=CP_PAY_METHODS.map(p=>
+      `<option value="${p}"${p===pm?' selected':''}>${p}</option>`).join('');
+
+    /* Dim row if not due this month */
+    const rowOpacity = isDueThisMonth?'1':'0.5';
+
+    html+=`<div class="tbl-row ${isDone?'done':''}" id="cpr_${fy}_${h.id}"
+        style="grid-template-columns:${GC};opacity:${rowOpacity}">
+      <!-- Due day -->
       <div style="text-align:center">
-        <div style="font-size:13px;font-weight:700;color:${dayColor}">${h.dayOfMonth}</div>
+        <div style="font-size:13px;font-weight:700;color:${dayCol}">${h.dayOfMonth}</div>
         <div style="font-size:8px;color:var(--muted)">day</div>
       </div>
+      <!-- Name + sub + progress -->
       <div>
-        <div class="row-name">${h.name}</div>
-        <div class="row-sub">${h.sub||''}</div>
-        <div class="row-prog"><div class="row-prog-fill" style="width:${Math.min(p,100)}%;background:${barColor}"></div></div>
+        <div class="row-name" contenteditable="true"
+          onblur="cpRename('${h.id}','name',this.textContent)"
+          style="cursor:text;outline:none" title="Click to edit name">${h.name}</div>
+        <div class="row-sub" contenteditable="true"
+          onblur="cpRename('${h.id}','sub',this.textContent)"
+          style="cursor:text;outline:none" title="Click to edit sub-label">${h.sub||''}</div>
+        <div class="row-prog"><div class="row-prog-fill" style="width:${Math.min(p,100)}%;background:${barCol}"></div></div>
       </div>
-      <div style="text-align:center;font-size:10px;color:var(--muted2);align-self:center">Monthly</div>
+      <!-- Frequency -->
+      <div style="padding:2px 4px">
+        <select class="pay-select" onchange="cpSetFreq('${h.id}',this.value)"
+          style="background:${freqColors[freq]||'var(--s2)'}22;border-color:${freqColors[freq]||'var(--border)'}55;color:${freqColors[freq]||'var(--text)'}">
+          ${freqOpts}
+        </select>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px;text-align:center">
+          ${isDueThisMonth?'<span style="color:var(--green)">● Due</span>':'<span style="color:var(--muted)">○ Not due</span>'}
+        </div>
+      </div>
+      <!-- Payment method -->
+      <div style="padding:2px 4px">
+        <select class="pay-select" onchange="cpSetPayMethod('${h.id}',this.value)">
+          ${pmOpts}
+          <option value="__add__">+ Add method…</option>
+        </select>
+        <div style="font-size:9px;color:${pmColors[pm]||'var(--muted2)'};margin-top:2px;text-align:center;font-weight:500">${pm}</div>
+      </div>
+      <!-- Budget -->
       <div style="text-align:right">
         <input class="num-in bud" type="number" value="${h.budget||''}" placeholder="0"
-          onchange="cpSetBudget('${h.id}',this.value)" title="Monthly budget">
+          onchange="cpSetBudget('${h.id}',this.value)" title="Amount per occurrence">
         <div style="font-size:9px;color:var(--muted);margin-top:2px">Ann: ${fmt(annBudget)}</div>
       </div>
+      <!-- Actual -->
       <div style="text-align:right">
         <input class="num-in" type="number" value="${monthActual||''}" placeholder="0"
-          onchange="setCpA('${fy}','${h.id}',${m},this.value);renderCommitted()" title="This month actual">
+          onchange="setCpA('${fy}','${h.id}',${m},this.value);renderCommitted()"
+          title="Amount paid this month" ${isDueThisMonth?'':'style="opacity:.5"'}>
         <div style="font-size:9px;color:var(--muted);margin-top:2px">YTD: ${fmt(ytdActual)}</div>
       </div>
+      <!-- Diff -->
       <div class="diff-cell" style="color:${dc}">${ds}</div>
-      <div class="pct-cell" style="color:${pctColor}">${annBudget>0?fmtP(p):'—'}</div>
-      <div><button class="check-btn ${done?'done':''}" onclick="cpToggle('${fy}','${h.id}',${m})" title="Mark paid">✓</button></div>
+      <!-- % -->
+      <div class="pct-cell" style="color:${pctCol}">${annBudget>0?fmtP(p):'—'}</div>
+      <!-- Actions: edit + delete -->
+      <div style="display:flex;gap:3px;align-items:center;justify-content:center">
+        <button onclick="cpEdit('${h.id}')" title="Edit details"
+          style="background:var(--s2);border:1px solid var(--border);color:var(--muted2);border-radius:5px;width:22px;height:22px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center">✎</button>
+        <button onclick="cpDelete('${h.id}')" title="Delete payout"
+          style="background:var(--red-bg);border:1px solid var(--red);color:var(--red);border-radius:5px;width:22px;height:22px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center">×</button>
+      </div>
+      <!-- Check -->
+      <div><button class="check-btn ${isDone?'done':''}" onclick="cpToggle('${fy}','${h.id}',${m})" title="Mark paid">✓</button></div>
     </div>`;
   });
 
-  // Sub-total row
+  /* Sub-total (only due-this-month items count toward monthly budget) */
   let annBudTotal=0, ytdTotal=0, monthTotal=0;
   sorted.forEach(h=>{
-    annBudTotal+=(h.budget||0)*12;
+    const dueMonths=CP_FREQ_MONTHS[h.freq||'monthly']||CP_FREQ_MONTHS.monthly;
+    annBudTotal+=(h.budget||0)*dueMonths.length;
     for(let mm=0;mm<=m;mm++) ytdTotal+=getCpA(fy,h.id,mm);
     monthTotal+=getCpA(fy,h.id,m);
   });
   const subDiff=annBudTotal-ytdTotal;
   const subDc=subDiff>=0?'var(--green)':'var(--red)';
-  const subPct=annBudTotal>0?fmtP(ytdTotal/annBudTotal*100):'—';
   const subPctN=annBudTotal>0?ytdTotal/annBudTotal*100:0;
   html+=`<div class="subtotal-row" style="grid-template-columns:${GC}">
     <div></div>
     <div class="sub-label">Sub-Total <span style="font-weight:400;font-size:9px;color:var(--muted)">YTD vs Annual</span></div>
-    <div></div>
+    <div></div><div></div>
     <div class="sub-val" style="color:var(--muted2)">${fmt(annBudTotal/12)}<div style="font-size:9px;color:var(--muted)">Ann: ${fmt(annBudTotal)}</div></div>
     <div class="sub-val" style="color:var(--text)">${fmt(monthTotal)}<div style="font-size:9px;color:var(--muted)">YTD: ${fmt(ytdTotal)}</div></div>
     <div class="sub-val" style="color:${subDc}">${subDiff>=0?'+':''}${fmt(Math.abs(subDiff))}</div>
-    <div class="sub-val" style="color:${subPctN>100?'var(--red)':subPctN>80?'var(--yellow)':'var(--muted2)'}">${subPct}</div>
-    <div></div>
+    <div class="sub-val" style="color:${subPctN>100?'var(--red)':subPctN>80?'var(--yellow)':'var(--muted2)'}">${annBudTotal>0?fmtP(subPctN):'—'}</div>
+    <div></div><div></div>
   </div>`;
 
-  // Full-year total row
+  /* Full-year total */
   let annActFull=0;
   sorted.forEach(h=>{for(let mm=0;mm<12;mm++) annActFull+=getCpA(fy,h.id,mm);});
   const annDiff=annBudTotal-annActFull;
   html+=`<div class="total-row" style="grid-template-columns:${GC}">
     <div></div>
     <div class="tot-label">Full Year (${fy})</div>
-    <div></div>
+    <div></div><div></div>
     <div class="tot-val">${fmt(annBudTotal)}</div>
     <div class="tot-val">${fmt(annActFull)}</div>
     <div class="${annDiff>=0?'tot-diff-ok':'tot-diff-ov'}">${annDiff>=0?'+':''}${fmt(Math.abs(annDiff))}</div>
     <div class="tot-val">${annBudTotal>0?fmtP(annActFull/annBudTotal*100):'—'}</div>
-    <div></div>
+    <div></div><div></div>
   </div>`;
 
   rowEl.innerHTML=html;
-
-  // ── Monthly history panel ──
   renderCpHistory(sorted, fy);
 }
 
@@ -1217,14 +1286,66 @@ function cpSetBudget(id,val){
   if(h){h.budget=parseFloat(val)||0; save(); renderCommitted();}
 }
 
+function cpRename(id, field, val){
+  const h=cpItems.find(h=>h.id===id); if(!h)return;
+  h[field]=val.trim(); save();
+}
+function cpSetFreq(id, val){
+  const h=cpItems.find(h=>h.id===id); if(!h)return;
+  h.freq=val; save(); renderCommitted();
+}
+function cpSetPayMethod(id, val){
+  if(val==='__add__'){
+    const nm=prompt('New payment method name:');
+    if(!nm||!nm.trim()) return;
+    const trimmed=nm.trim();
+    if(!CP_PAY_METHODS.includes(trimmed)){
+      CP_PAY_METHODS.push(trimmed);
+      SS('fp_cp_paymethods', CP_PAY_METHODS);
+    }
+    const h=cpItems.find(h=>h.id===id); if(!h)return;
+    h.payMethod=trimmed;
+  } else {
+    const h=cpItems.find(h=>h.id===id); if(!h)return;
+    h.payMethod=val;
+  }
+  save(); renderCommitted();
+}
+function cpEdit(id){
+  const h=cpItems.find(h=>h.id===id); if(!h)return;
+  const name=prompt('Payout name:', h.name); if(name===null)return;
+  const sub=prompt('Sub-label:', h.sub||''); if(sub===null)return;
+  const day=parseInt(prompt('Due day of month (1-31):', h.dayOfMonth)||h.dayOfMonth);
+  const budget=parseFloat(prompt('Amount per occurrence (₹):', h.budget)||h.budget)||0;
+  h.name=name.trim()||h.name;
+  h.sub=sub.trim();
+  h.dayOfMonth=Math.max(1,Math.min(31,day||h.dayOfMonth));
+  h.budget=budget;
+  save(); renderCommitted();
+}
+function cpDelete(id){
+  const h=cpItems.find(h=>h.id===id); if(!h)return;
+  if(!confirm(`Delete "${h.name}"? This will remove all its data.`)) return;
+  cpItems=cpItems.filter(h=>h.id!==id);
+  FYS.forEach(fy=>{ if(cpActuals[fy]) delete cpActuals[fy][id]; });
+  Object.keys(cpChecks).forEach(k=>{ if(k.includes('_'+id+'_')) delete cpChecks[k]; });
+  save(); renderCommitted();
+}
 function addCommitted(){
   const name=prompt('Payout name (e.g. Car Insurance):');
   if(!name)return;
   const sub=prompt('Sub-label (e.g. HDFC Bank):')||'';
   const day=parseInt(prompt('Due day of month (1-31):')||'1')||1;
-  const budget=parseFloat(prompt('Monthly amount (₹):')||'0')||0;
+  const budget=parseFloat(prompt('Amount per occurrence (₹):')||'0')||0;
+  const freqChoice=prompt('Frequency:\n1 = Monthly\n2 = Quarterly\n3 = Half-Yearly\n4 = Yearly\n(type 1/2/3/4):','1');
+  const freq=CP_FREQ_VALS[parseInt(freqChoice||'1')-1]||'monthly';
+  const pmList=CP_PAY_METHODS.map((p,i)=>`${i+1} = ${p}`).join('\n');
+  const pmChoice=prompt('Payment method:\n'+pmList+'\n(type number, or type a new method name):','1');
+  const pmIdx=parseInt(pmChoice)-1;
+  const payMethod=(pmIdx>=0&&pmIdx<CP_PAY_METHODS.length)?CP_PAY_METHODS[pmIdx]:(pmChoice&&pmChoice.trim()&&isNaN(pmChoice)?pmChoice.trim():'Others');
+  if(!CP_PAY_METHODS.includes(payMethod)){ CP_PAY_METHODS.push(payMethod); SS('fp_cp_paymethods',CP_PAY_METHODS); }
   const id='cp'+Date.now();
-  cpItems.push({id,name,sub,dayOfMonth:Math.max(1,Math.min(31,day)),budget,active:true,startMonth:currentMonth,startFY:currentFY});
+  cpItems.push({id,name,sub,dayOfMonth:Math.max(1,Math.min(31,day)),budget,freq,payMethod,active:true,startMonth:currentMonth,startFY:currentFY});
   FYS.forEach(fy=>{
     if(!cpActuals[fy])cpActuals[fy]={};
     cpActuals[fy][id]=new Array(12).fill(0);
