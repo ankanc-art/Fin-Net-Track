@@ -229,20 +229,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
 </style>
 </head>
 <body>
-
-<!-- SIGN-IN OVERLAY -->
-<div id="authOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:#f0f2f7;align-items:center;justify-content:center">
-  <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:40px 36px;max-width:360px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)">
-    <div style="font-family:Syne,sans-serif;font-size:24px;font-weight:800;color:#1a1f2e;margin-bottom:6px">Financial <span style="color:#2563eb">Plan</span></div>
-    <div style="font-size:11px;color:#8a92a6;letter-spacing:.06em;text-transform:uppercase;margin-bottom:28px">FY 2025–28 · Fin-Net-Track</div>
-    <button onclick="signInGoogle()" style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:13px 20px;border-radius:10px;border:1px solid rgba(0,0,0,.12);background:#fff;cursor:pointer;font-size:14px;font-family:'JetBrains Mono',monospace;color:#1a1f2e;box-shadow:0 1px 4px rgba(0,0,0,.06)">
-      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-      Sign in with Google
-    </button>
-    <div style="margin-top:12px;font-size:10px;color:#8a92a6">Sign in to sync across all your devices.<br>Your data stays private to your account.</div>
-    <button onclick="skipAuth()" style="margin-top:10px;background:transparent;border:none;color:#8a92a6;font-size:11px;cursor:pointer;text-decoration:underline;font-family:'JetBrains Mono',monospace">Continue without signing in →</button>
-  </div>
-</div>
 <div class="toast" id="toast"></div>
 <!-- ═══ MOBILE TOP NAV ═══ -->
 <div class="mobile-nav">
@@ -265,6 +251,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
     <div class="nav-item" id="mdNav_expbreakdown" onclick="mobileNav('expbreakdown')"><div class="nav-dot" style="background:var(--orange)"></div>Exp Breakdown</div>
     <div class="nav-item" id="mdNav_income" onclick="mobileNav('income')"><div class="nav-dot"></div>Income</div>
     <div class="nav-item" id="mdNav_savings" onclick="mobileNav('savings')"><div class="nav-dot"></div>Savings</div>
+    <div class="nav-item" id="mdNav_committed" onclick="mobileNav('committed')"><div class="nav-dot" style="background:#f59e0b"></div>Committed Payouts</div>
     <div class="nav-item" id="mdNav_networth" onclick="mobileNav('networth')"><div class="nav-dot" style="background:#60a5fa"></div>Net Worth</div>
     <div style="padding:10px 16px 4px;font-size:9px;color:#4a5268;text-transform:uppercase;letter-spacing:.1em">Financial Year</div>
     <div class="mobile-fy-row" id="mobileFyBtns"></div>
@@ -286,11 +273,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
   <div class="logo">
     <h1>Financial <span>Plan</span></h1>
     <p>FY 2025 – 2028</p>
-    <div id="userChip" style="display:none;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)">
-      <img id="userAvatar" src="" width="22" height="22" style="border-radius:50%;flex-shrink:0" onerror="this.style.display='none'">
-      <span id="userName" style="font-size:10px;color:#8492ab;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-      <button onclick="signOutUser()" style="background:transparent;border:1px solid rgba(255,255,255,.12);color:#8492ab;border-radius:5px;padding:2px 7px;font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace">Sign out</button>
-    </div>
   </div>
   <div class="nav-sec-lbl">Views</div>
   <div class="nav-item active" onclick="showView('dashboard',this)"><div class="nav-dot"></div>Dashboard</div>
@@ -298,6 +280,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
   <div class="nav-item" onclick="showView('expbreakdown',this)"><div class="nav-dot" style="background:var(--orange)"></div>Exp Breakdown</div>
   <div class="nav-item" onclick="showView('income',this)"><div class="nav-dot"></div>Income</div>
   <div class="nav-item" onclick="showView('savings',this)"><div class="nav-dot"></div>Savings</div>
+  <div class="nav-item" onclick="showView('committed',this)"><div class="nav-dot" style="background:#f59e0b"></div>Committed Payouts</div>
   <div class="nav-item" onclick="showView('networth',this)"><div class="nav-dot" style="background:#60a5fa"></div>Net Worth</div>
   <div class="nav-sec-lbl">Status</div>
   <div class="nav-item" style="cursor:default"><div class="nav-dot" style="background:#d4f54e"></div><span id="sideComp">—</span></div>
@@ -423,6 +406,38 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
     <div id="sRows"></div>
   </div>
 
+
+  <!-- COMMITTED PAYOUTS -->
+  <div class="view" id="view-committed">
+    <div class="ph">
+      <div>
+        <div class="pt">Committed <span>Payouts</span></div>
+        <div class="ps">Recurring payments · Sorted by due date · Monthly tracking</div>
+      </div>
+      <button class="add-head-btn" onclick="addCommitted()">+ Add payout</button>
+    </div>
+    <div class="tracker-header">
+      <div class="comp-row" style="flex:1;margin-bottom:0">
+        <div class="comp-bar-w"><div class="comp-bar" id="cpCompBar"></div></div>
+        <div class="comp-txt" id="cpCompTxt"></div>
+      </div>
+    </div>
+    <!-- column header -->
+    <div class="tbl-head" style="grid-template-columns:28px 1fr 90px 110px 110px 100px 80px 34px">
+      <div style="text-align:center">Due</div>
+      <div>Payout</div>
+      <div style="text-align:center">Frequency</div>
+      <div style="text-align:right">Monthly Budget</div>
+      <div style="text-align:right">This Month · YTD</div>
+      <div style="text-align:right">Annual Remaining</div>
+      <div style="text-align:right">YTD Used %</div>
+      <div></div>
+    </div>
+    <div id="cpRows"></div>
+    <!-- monthly history panel -->
+    <div id="cpHistory" style="margin-top:20px"></div>
+  </div>
+
   <!-- NET WORTH -->
   <div class="view" id="view-networth">
     <div class="ph">
@@ -443,9 +458,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
 </main>
 </div>
 </div>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script>
 /* ══════════════════════════════════════════════
    CONSTANTS
@@ -674,118 +686,19 @@ FYS.forEach(fy=>{
 });
 let ebdChecks = LS(KEYS.ebdChecks) || {};
 
-/* ══════════════════════════════════════════════
-   FIREBASE — fin-net-track project
-══════════════════════════════════════════════ */
-const FB_CONFIG = {
-  apiKey: "AIzaSyDs2I4_-8E2tuWbmmuaqfK9Htm91lJ1wio",
-  authDomain: "fin-net-track.firebaseapp.com",
-  databaseURL: "https://fin-net-track-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "fin-net-track",
-  storageBucket: "fin-net-track.firebasestorage.app",
-  messagingSenderId: "559556813302",
-  appId: "1:559556813302:web:9232503bbeeb305cf227d7"
-};
-firebase.initializeApp(FB_CONFIG);
-const fbDb   = firebase.database();
-const fbAuth = firebase.auth();
-const DB_ROOT = 'users';
-let fbUser = null;
-
-function _payload(){
-  return {heads,budgets,actuals,checks,nwSecs,nwHistory,
-          ebdHeads,ebdActuals,ebdChecks,_ts:Date.now()};
-}
-
-/* Save: localStorage first (instant), then Firebase in background */
 function save(){
   SS(KEYS.heads,heads); SS(KEYS.budgets,budgets); SS(KEYS.actuals,actuals);
   SS(KEYS.checks,checks); SS(KEYS.nw,nwSecs); SS(KEYS.nwh,nwHistory);
   SS(KEYS.ebdHeads,ebdHeads); SS(KEYS.ebdActuals,ebdActuals); SS(KEYS.ebdChecks,ebdChecks);
+  SS('fp_cp_items',cpItems); SS('fp_cp_actuals',cpActuals); SS('fp_cp_checks',cpChecks);
   SS('fp_lastsaved',new Date().toISOString());
-  if(fbUser){
-    fbDb.ref(DB_ROOT+'/'+fbUser.uid).set(_payload())
-      .then(()=>showToast('✓ Saved to cloud ☁'))
-      .catch(()=>showToast('✓ Saved locally'));
-  } else {
-    showToast('✓ Saved locally');
-  }
+  showToast('✓ Saved');
 }
-
-/* Pull data from Firebase after sign-in */
-function syncFromCloud(){
-  if(!fbUser) return;
-  fbDb.ref(DB_ROOT+'/'+fbUser.uid).once('value')
-    .then(snap=>{
-      const d=snap.val();
-      if(d && d.heads){
-        heads=d.heads; budgets=d.budgets; actuals=d.actuals;
-        checks=d.checks; nwSecs=d.nwSecs; nwHistory=d.nwHistory;
-        if(d.ebdHeads)   ebdHeads=d.ebdHeads;
-        if(d.ebdActuals) ebdActuals=d.ebdActuals;
-        if(d.ebdChecks)  ebdChecks=d.ebdChecks;
-        FYS.forEach(fy=>{
-          if(!budgets[fy]) budgets[fy]=JSON.parse(JSON.stringify(DEF_BUDGETS));
-          if(!actuals[fy]) actuals[fy]={expenses:{},income:{},savings:{}};
-          ['expenses','income','savings'].forEach(cat=>{
-            if(!actuals[fy][cat]) actuals[fy][cat]={};
-            heads[cat].forEach(h=>{if(!actuals[fy][cat][h.id]) actuals[fy][cat][h.id]=new Array(12).fill(0);});
-          });
-          if(!ebdActuals[fy]) ebdActuals[fy]={};
-          ebdHeads.forEach(h=>{if(!ebdActuals[fy][h.id]) ebdActuals[fy][h.id]=new Array(12).fill(0);});
-        });
-        render();
-        showToast('✓ Synced from cloud ☁');
-      } else {
-        /* First time — push local data up to cloud */
-        fbDb.ref(DB_ROOT+'/'+fbUser.uid).set(_payload()).catch(()=>{});
-        showToast('✓ Data pushed to cloud ☁');
-      }
-    })
-    .catch(()=>{ /* offline — local data already shown */ });
-}
-
-/* Auth */
-function signInGoogle(){
-  fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
-    .catch(err=>alert('Sign-in failed: '+err.message));
-}
-function skipAuth(){
-  document.getElementById('authOverlay').style.display='none';
-}
-function signOutUser(){
-  fbUser=null;
-  fbAuth.signOut().then(()=>{
-    document.getElementById('userChip').style.display='none';
-    document.getElementById('authOverlay').style.display='flex';
-  });
-}
-function _showUserChip(user){
-  const chip=document.getElementById('userChip');
-  if(!chip) return;
-  chip.style.display='flex';
-  const nm=chip.querySelector('#userName');
-  const av=chip.querySelector('#userAvatar');
-  if(nm) nm.textContent=user.displayName||user.email;
-  if(av){ if(user.photoURL) av.src=user.photoURL; else av.style.display='none'; }
-}
-
-/* Single auth listener — fires once on every page load */
-let _synced=false;
-fbAuth.onAuthStateChanged(user=>{
-  fbUser=user;
-  if(user){
-    document.getElementById('authOverlay').style.display='none';
-    _showUserChip(user);
-    if(!_synced){ _synced=true; syncFromCloud(); }
-  } else {
-    document.getElementById('authOverlay').style.display='flex';
-  }
-});
 
 function exportData(){
   const blob=new Blob([JSON.stringify({_v:3,_d:new Date().toISOString(),
-    heads,budgets,actuals,checks,nwSecs,nwHistory,ebdHeads,ebdActuals,ebdChecks},null,2)],
+    heads,budgets,actuals,checks,nwSecs,nwHistory,ebdHeads,ebdActuals,ebdChecks,
+    cpItems,cpActuals,cpChecks},null,2)],
     {type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -810,6 +723,9 @@ function importData(){
         if(d.ebdHeads)   ebdHeads=d.ebdHeads;
         if(d.ebdActuals) ebdActuals=d.ebdActuals;
         if(d.ebdChecks)  ebdChecks=d.ebdChecks;
+        if(d.cpItems)   cpItems=d.cpItems;
+        if(d.cpActuals) cpActuals=d.cpActuals;
+        if(d.cpChecks)  cpChecks=d.cpChecks;
         FYS.forEach(fy=>{
           if(!budgets[fy])budgets[fy]=JSON.parse(JSON.stringify(DEF_BUDGETS));
           if(!actuals[fy])actuals[fy]={expenses:{},income:{},savings:{}};
@@ -845,7 +761,7 @@ function mobileNav(id){
   closeDrawer();
   const el=document.querySelector('.nav-item[onclick="showView(\''+id+'\',this)"]');
   showView(id,el);
-  ['dashboard','expenses','expbreakdown','income','savings','networth'].forEach(v=>{
+  ['dashboard','expenses','expbreakdown','income','savings','committed','networth'].forEach(v=>{
     const m=document.getElementById('mdNav_'+v);
     if(m) m.classList.toggle('active',v===id);
   });
@@ -860,6 +776,43 @@ function syncMobile(){
 }
 
 
+
+
+/* ══════════════════════════════════════════════
+   COMMITTED PAYOUTS — state
+══════════════════════════════════════════════ */
+/* Each item: {id, name, sub, dayOfMonth, budget, active, startMonth (0-11), startFY} */
+const DEF_COMMITTED = [
+  {id:'cp1', name:'House Loan EMI',       sub:'HDFC Bank',          dayOfMonth:5,  budget:81000, active:true,  startMonth:0, startFY:'FY25-26'},
+  {id:'cp2', name:'Rent',                 sub:'Monthly transfer',   dayOfMonth:1,  budget:36667, active:true,  startMonth:0, startFY:'FY25-26'},
+  {id:'cp3', name:'Sukanya Samriddhi',    sub:'HDFC — annual SIP',  dayOfMonth:10, budget:12500, active:true,  startMonth:0, startFY:'FY25-26'},
+  {id:'cp4', name:'MF SIP — PAYTM',      sub:'20K monthly SIP',    dayOfMonth:7,  budget:20000, active:true,  startMonth:0, startFY:'FY25-26'},
+  {id:'cp5', name:'NPS Contribution',     sub:'ICICI — pension',    dayOfMonth:10, budget:5000,  active:true,  startMonth:0, startFY:'FY25-26'},
+  {id:'cp6', name:'School Fees',          sub:'Quarterly payment',  dayOfMonth:15, budget:8000,  active:true,  startMonth:0, startFY:'FY25-26'},
+  {id:'cp7', name:'Bank Direct Debits',   sub:'Auto-debit pool',    dayOfMonth:3,  budget:11240, active:true,  startMonth:0, startFY:'FY25-26'},
+  {id:'cp8', name:'Insurance Premium',    sub:'Annual / monthly',   dayOfMonth:20, budget:5000,  active:true,  startMonth:0, startFY:'FY25-26'},
+];
+
+let cpItems   = LS('fp_cp_items')   || JSON.parse(JSON.stringify(DEF_COMMITTED));
+// cpActuals[fy][id][month] = amount paid
+let cpActuals = LS('fp_cp_actuals') || {};
+// cpChecks[fy_id_m] = bool
+let cpChecks  = LS('fp_cp_checks')  || {};
+
+FYS.forEach(fy=>{
+  if(!cpActuals[fy]) cpActuals[fy]={};
+  cpItems.forEach(h=>{if(!cpActuals[fy][h.id]) cpActuals[fy][h.id]=new Array(12).fill(0);});
+});
+
+/* accessors */
+function getCpA(fy,id,m){ return (cpActuals[fy]&&cpActuals[fy][id]&&cpActuals[fy][id][m])||0; }
+function setCpA(fy,id,m,v){
+  if(!cpActuals[fy]) cpActuals[fy]={};
+  if(!cpActuals[fy][id]) cpActuals[fy][id]=new Array(12).fill(0);
+  cpActuals[fy][id][m]=parseFloat(v)||0; save();
+}
+function getCpC(fy,id,m){ return !!(cpChecks[fy+'_'+id+'_'+m]); }
+function togCpC(fy,id,m){ const k=fy+'_'+id+'_'+m; cpChecks[k]=!cpChecks[k]; save(); }
 
 /* ── accessors ── */
 function getA(fy,cat,id,m){ return (actuals[fy]&&actuals[fy][cat]&&actuals[fy][cat][id]&&actuals[fy][cat][id][m])||0; }
@@ -950,6 +903,7 @@ function render(){
   else if(activeView==='expbreakdown')renderExpBreakdown();
   else if(activeView==='income')renderTracker('income');
   else if(activeView==='savings')renderTracker('savings');
+  else if(activeView==='committed')renderCommitted();
   else if(activeView==='networth')renderNetworth();
 }
 
@@ -1063,6 +1017,219 @@ function renderFYTrend(){
   svg+=`<circle cx="${pl+150}" cy="6" r="3" fill="#2563eb"/><text x="${pl+158}" y="10" font-size="9" fill="#8a92a6" font-family="JetBrains Mono,monospace">Savings</text>`;
   svg+=`</svg>`;
   svgEl.innerHTML=svg;
+}
+
+
+/* ══════════════════════════════════════════════
+   COMMITTED PAYOUTS — renderer
+══════════════════════════════════════════════ */
+function renderCommitted(){
+  const fy=currentFY, m=currentMonth, months=FY_MONTHS[fy];
+  const mlEl=document.getElementById('cpml');
+  // page header month label (not required but nice)
+
+  // Sort items by dayOfMonth ascending (due date order for the month)
+  const sorted=[...cpItems].filter(h=>h.active!==false).sort((a,b)=>a.dayOfMonth-b.dayOfMonth);
+
+  // completion
+  let done=0;
+  sorted.forEach(h=>{if(getCpC(fy,h.id,m))done++;});
+  const pct=sorted.length?Math.round(done/sorted.length*100):0;
+  const cb=document.getElementById('cpCompBar');
+  const ct=document.getElementById('cpCompTxt');
+  if(cb)cb.style.width=pct+'%';
+  if(ct)ct.textContent=`${done}/${sorted.length} paid this month`;
+
+  const rowEl=document.getElementById('cpRows');
+  if(!rowEl)return;
+
+  const GC='28px 1fr 90px 110px 110px 100px 80px 34px';
+
+  let html='';
+  sorted.forEach((h,idx)=>{
+    const monthActual = getCpA(fy,h.id,m);
+    const annBudget   = (h.budget||0)*12;
+    let ytdActual=0;
+    for(let mm=0;mm<=m;mm++) ytdActual+=getCpA(fy,h.id,mm);
+    const done = getCpC(fy,h.id,m);
+    const p    = annBudget>0?Math.min(ytdActual/annBudget*100,150):0;
+    const barColor = ytdActual>annBudget?'var(--red)':'var(--green)';
+    const diff = annBudget-ytdActual;
+    const ds   = annBudget===0?'—':(diff>=0?'+'+fmt(diff):fmt(diff));
+    const dc   = diff>=0?'var(--green)':'var(--red)';
+    const pctColor = p>100?'var(--red)':p>80?'var(--yellow)':'var(--muted2)';
+    // due date badge colour: due today or past = red, upcoming = green, far = muted
+    const today = new Date().getDate();
+    const dayColor = h.dayOfMonth<today?'var(--red)':h.dayOfMonth===today?'var(--accent)':'var(--green)';
+
+    html+=`<div class="tbl-row ${done?'done':''}" id="cpr_${fy}_${h.id}" style="grid-template-columns:${GC}">
+      <div style="text-align:center">
+        <div style="font-size:13px;font-weight:700;color:${dayColor}">${h.dayOfMonth}</div>
+        <div style="font-size:8px;color:var(--muted)">day</div>
+      </div>
+      <div>
+        <div class="row-name">${h.name}</div>
+        <div class="row-sub">${h.sub||''}</div>
+        <div class="row-prog"><div class="row-prog-fill" style="width:${Math.min(p,100)}%;background:${barColor}"></div></div>
+      </div>
+      <div style="text-align:center;font-size:10px;color:var(--muted2);align-self:center">Monthly</div>
+      <div style="text-align:right">
+        <input class="num-in bud" type="number" value="${h.budget||''}" placeholder="0"
+          onchange="cpSetBudget('${h.id}',this.value)" title="Monthly budget">
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">Ann: ${fmt(annBudget)}</div>
+      </div>
+      <div style="text-align:right">
+        <input class="num-in" type="number" value="${monthActual||''}" placeholder="0"
+          onchange="setCpA('${fy}','${h.id}',${m},this.value);renderCommitted()" title="This month actual">
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">YTD: ${fmt(ytdActual)}</div>
+      </div>
+      <div class="diff-cell" style="color:${dc}">${ds}</div>
+      <div class="pct-cell" style="color:${pctColor}">${annBudget>0?fmtP(p):'—'}</div>
+      <div><button class="check-btn ${done?'done':''}" onclick="cpToggle('${fy}','${h.id}',${m})" title="Mark paid">✓</button></div>
+    </div>`;
+  });
+
+  // Sub-total row
+  let annBudTotal=0, ytdTotal=0, monthTotal=0;
+  sorted.forEach(h=>{
+    annBudTotal+=(h.budget||0)*12;
+    for(let mm=0;mm<=m;mm++) ytdTotal+=getCpA(fy,h.id,mm);
+    monthTotal+=getCpA(fy,h.id,m);
+  });
+  const subDiff=annBudTotal-ytdTotal;
+  const subDc=subDiff>=0?'var(--green)':'var(--red)';
+  const subPct=annBudTotal>0?fmtP(ytdTotal/annBudTotal*100):'—';
+  const subPctN=annBudTotal>0?ytdTotal/annBudTotal*100:0;
+  html+=`<div class="subtotal-row" style="grid-template-columns:${GC}">
+    <div></div>
+    <div class="sub-label">Sub-Total <span style="font-weight:400;font-size:9px;color:var(--muted)">YTD vs Annual</span></div>
+    <div></div>
+    <div class="sub-val" style="color:var(--muted2)">${fmt(annBudTotal/12)}<div style="font-size:9px;color:var(--muted)">Ann: ${fmt(annBudTotal)}</div></div>
+    <div class="sub-val" style="color:var(--text)">${fmt(monthTotal)}<div style="font-size:9px;color:var(--muted)">YTD: ${fmt(ytdTotal)}</div></div>
+    <div class="sub-val" style="color:${subDc}">${subDiff>=0?'+':''}${fmt(Math.abs(subDiff))}</div>
+    <div class="sub-val" style="color:${subPctN>100?'var(--red)':subPctN>80?'var(--yellow)':'var(--muted2)'}">${subPct}</div>
+    <div></div>
+  </div>`;
+
+  // Full-year total row
+  let annActFull=0;
+  sorted.forEach(h=>{for(let mm=0;mm<12;mm++) annActFull+=getCpA(fy,h.id,mm);});
+  const annDiff=annBudTotal-annActFull;
+  html+=`<div class="total-row" style="grid-template-columns:${GC}">
+    <div></div>
+    <div class="tot-label">Full Year (${fy})</div>
+    <div></div>
+    <div class="tot-val">${fmt(annBudTotal)}</div>
+    <div class="tot-val">${fmt(annActFull)}</div>
+    <div class="${annDiff>=0?'tot-diff-ok':'tot-diff-ov'}">${annDiff>=0?'+':''}${fmt(Math.abs(annDiff))}</div>
+    <div class="tot-val">${annBudTotal>0?fmtP(annActFull/annBudTotal*100):'—'}</div>
+    <div></div>
+  </div>`;
+
+  rowEl.innerHTML=html;
+
+  // ── Monthly history panel ──
+  renderCpHistory(sorted, fy);
+}
+
+function renderCpHistory(sorted, fy){
+  const el=document.getElementById('cpHistory');
+  if(!el||!sorted.length) return;
+  const months=FY_MONTHS[fy];
+
+  let html=`<div style="margin-bottom:10px">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding-bottom:8px;border-bottom:1px solid var(--border2)">
+      Monthly History — ${fy}
+    </div>
+  </div>`;
+
+  // Table: rows = payouts, cols = months
+  const colW='70px';
+  html+=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+  <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:700px">
+    <thead>
+      <tr>
+        <th style="text-align:left;padding:6px 10px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:400;border-bottom:1px solid var(--border2);position:sticky;left:0;background:var(--bg)">Payout</th>
+        <th style="text-align:center;padding:4px 2px;color:var(--muted);font-size:9px;font-weight:400;width:30px;border-bottom:1px solid var(--border2)">Due</th>
+        ${months.map((mn,mi)=>`<th style="text-align:right;padding:6px 8px;color:${mi===currentMonth?'var(--accent)':'var(--muted)'};font-size:9px;font-weight:${mi===currentMonth?'600':'400'};border-bottom:1px solid var(--border2);min-width:${colW}">${mn}</th>`).join('')}
+        <th style="text-align:right;padding:6px 8px;color:var(--muted);font-size:9px;font-weight:400;border-bottom:1px solid var(--border2)">Total</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  sorted.forEach((h,idx)=>{
+    const rowTotal=FY_MONTHS[fy].reduce((_,__,mm)=>_+getCpA(fy,h.id,mm),0);
+    html+=`<tr style="background:${idx%2===0?'var(--s1)':'var(--s2)'}">
+      <td style="padding:8px 10px;font-weight:500;color:var(--text);position:sticky;left:0;background:${idx%2===0?'var(--s1)':'var(--s2)'}">
+        ${h.name}<div style="font-size:9px;color:var(--muted);margin-top:1px">${h.sub||''}</div>
+      </td>
+      <td style="text-align:center;padding:4px 2px;color:var(--muted2);font-size:10px">${h.dayOfMonth}</td>
+      ${months.map((mn,mi)=>{
+        const v=getCpA(fy,h.id,mi);
+        const paid=getCpC(fy,h.id,mi);
+        const bgt=h.budget||0;
+        const col=v===0?'var(--muted)':v>=bgt?'var(--green)':'var(--yellow)';
+        const bg=mi===currentMonth?'rgba(37,99,235,.06)':'transparent';
+        return `<td style="text-align:right;padding:6px 8px;color:${col};background:${bg};border-left:${mi===currentMonth?'2px solid rgba(37,99,235,.2)':'none'}">
+          ${v>0?fmt(v):'—'}${paid?' <span style="color:var(--green);font-size:9px">✓</span>':''}
+        </td>`;
+      }).join('')}
+      <td style="text-align:right;padding:6px 8px;font-weight:600;color:${rowTotal>0?'var(--text)':'var(--muted)'}">${rowTotal>0?fmt(rowTotal):'—'}</td>
+    </tr>`;
+  });
+
+  // Totals row
+  html+=`<tr style="background:var(--s3);border-top:1px solid var(--border2)">
+    <td style="padding:8px 10px;font-weight:600;color:var(--muted2);font-size:10px;text-transform:uppercase;position:sticky;left:0;background:var(--s3)">Monthly Total</td>
+    <td></td>
+    ${months.map((mn,mi)=>{
+      const mTotal=sorted.reduce((s,h)=>s+getCpA(fy,h.id,mi),0);
+      return `<td style="text-align:right;padding:6px 8px;font-weight:600;color:${mTotal>0?'var(--text)':'var(--muted)'};background:${mi===currentMonth?'rgba(37,99,235,.06)':'transparent'}">${mTotal>0?fmt(mTotal):'—'}</td>`;
+    }).join('')}
+    <td style="text-align:right;padding:6px 8px;font-weight:700;color:var(--text)">${fmt(sorted.reduce((s,h)=>s+FY_MONTHS[fy].reduce((_,__,mm)=>_+getCpA(fy,h.id,mm),0),0))}</td>
+  </tr>`;
+
+  html+=`</tbody></table></div>`;
+  el.innerHTML=html;
+}
+
+function cpToggle(fy,id,m){
+  togCpC(fy,id,m);
+  const done=getCpC(fy,id,m);
+  const row=document.getElementById(`cpr_${fy}_${id}`);
+  const btn=row?.querySelector('.check-btn');
+  if(row)row.classList.toggle('done',done);
+  if(btn)btn.classList.toggle('done',done);
+  let d=0;
+  cpItems.filter(h=>h.active!==false).forEach(h=>{if(getCpC(fy,h.id,m))d++;});
+  const tot=cpItems.filter(h=>h.active!==false).length;
+  const cb=document.getElementById('cpCompBar');
+  const ct=document.getElementById('cpCompTxt');
+  if(cb)cb.style.width=(tot?Math.round(d/tot*100):0)+'%';
+  if(ct)ct.textContent=`${d}/${tot} paid this month`;
+  // re-render history
+  renderCpHistory(cpItems.filter(h=>h.active!==false).sort((a,b)=>a.dayOfMonth-b.dayOfMonth), fy);
+  save();
+}
+
+function cpSetBudget(id,val){
+  const h=cpItems.find(h=>h.id===id);
+  if(h){h.budget=parseFloat(val)||0; save(); renderCommitted();}
+}
+
+function addCommitted(){
+  const name=prompt('Payout name (e.g. Car Insurance):');
+  if(!name)return;
+  const sub=prompt('Sub-label (e.g. HDFC Bank):')||'';
+  const day=parseInt(prompt('Due day of month (1-31):')||'1')||1;
+  const budget=parseFloat(prompt('Monthly amount (₹):')||'0')||0;
+  const id='cp'+Date.now();
+  cpItems.push({id,name,sub,dayOfMonth:Math.max(1,Math.min(31,day)),budget,active:true,startMonth:currentMonth,startFY:currentFY});
+  FYS.forEach(fy=>{
+    if(!cpActuals[fy])cpActuals[fy]={};
+    cpActuals[fy][id]=new Array(12).fill(0);
+  });
+  save();renderCommitted();
 }
 
 /* ══════════════════════════════════════════════
