@@ -131,6 +131,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
 .tbl-row{display:grid;grid-template-columns:1fr 120px 120px 100px 90px 38px;gap:8px;align-items:center;padding:10px 12px;border-radius:8px;border:1px solid var(--border);margin-bottom:5px;background:var(--s1);transition:opacity .2s;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
 .tbl-row:hover{border-color:var(--border2);box-shadow:0 2px 6px rgba(0,0,0,0.06)}
 .tbl-row.done{opacity:.45}
+/* month selector bar inside views */
+.view-month-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:10px 14px;background:var(--s1);border:1px solid var(--border);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.vmb-btn{background:var(--s2);border:1px solid var(--border2);color:var(--muted2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.vmb-btn:hover{background:var(--s3);color:var(--text)}
+.vmb-month{font-family:var(--fd);font-size:16px;font-weight:700;color:var(--text);flex:1;text-align:center;letter-spacing:-.01em}
+.vmb-fy{font-size:10px;color:var(--muted);text-align:center;margin-top:1px}
+.vmb-today{font-size:10px;color:var(--accent);cursor:pointer;padding:4px 10px;border-radius:6px;background:var(--accent-bg);border:1px solid var(--accent-border);white-space:nowrap}
 .row-name{font-size:12px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:7px}
 .row-sub{font-size:10px;color:var(--muted);margin-top:2px}
 .row-prog{height:3px;background:var(--s3);border-radius:2px;margin-top:5px;overflow:hidden}
@@ -339,6 +346,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
     <div class="ph">
       <div><div class="pt">Expenses <span id="eml"></span></div><div class="ps">Log actuals · Edit budgets · Check off payments</div></div>
     </div>
+    <div class="view-month-bar">
+      <button class="vmb-btn" onclick="changeMonth(-1)">‹</button>
+      <div style="flex:1;text-align:center">
+        <div class="vmb-month" id="vmb_month_expenses"></div>
+        <div class="vmb-fy" id="vmb_fy_expenses"></div>
+      </div>
+      <button class="vmb-btn" onclick="goToToday()" class="vmb-today" title="Jump to current month">Today</button>
+      <button class="vmb-btn" onclick="changeMonth(1)">›</button>
+    </div>
+
     <div class="tracker-header">
       <div class="comp-row" style="flex:1;margin-bottom:0">
         <div class="comp-bar-w"><div class="comp-bar" id="eCompBar"></div></div>
@@ -356,6 +373,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
       <div><div class="pt">Expense Breakdown <span id="ebdml"></span></div><div class="ps">Category-level spend · Payment method · Budget vs YTD</div></div>
       <button class="add-head-btn" onclick="addExpBreakHead()">+ Add category</button>
     </div>
+    <div class="view-month-bar">
+      <button class="vmb-btn" onclick="changeMonth(-1)">‹</button>
+      <div style="flex:1;text-align:center">
+        <div class="vmb-month" id="vmb_month_expbreakdown"></div>
+        <div class="vmb-fy" id="vmb_fy_expbreakdown"></div>
+      </div>
+      <button class="vmb-btn" onclick="goToToday()" class="vmb-today" title="Jump to current month">Today</button>
+      <button class="vmb-btn" onclick="changeMonth(1)">›</button>
+    </div>
+
     <div class="tracker-header">
       <div class="comp-row" style="flex:1;margin-bottom:0">
         <div class="comp-bar-w"><div class="comp-bar" id="ebdCompBar"></div></div>
@@ -379,6 +406,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
     <div class="ph">
       <div><div class="pt">Income <span id="iml"></span></div><div class="ps">Log received income · Set targets · Confirm</div></div>
     </div>
+    <div class="view-month-bar">
+      <button class="vmb-btn" onclick="changeMonth(-1)">‹</button>
+      <div style="flex:1;text-align:center">
+        <div class="vmb-month" id="vmb_month_income"></div>
+        <div class="vmb-fy" id="vmb_fy_income"></div>
+      </div>
+      <button class="vmb-btn" onclick="goToToday()" class="vmb-today" title="Jump to current month">Today</button>
+      <button class="vmb-btn" onclick="changeMonth(1)">›</button>
+    </div>
+
     <div class="tracker-header">
       <div class="comp-row" style="flex:1;margin-bottom:0">
         <div class="comp-bar-w"><div class="comp-bar" id="iCompBar"></div></div>
@@ -395,6 +432,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
     <div class="ph">
       <div><div class="pt">Savings <span id="sml"></span></div><div class="ps">Track investments · Set targets · Mark transferred</div></div>
     </div>
+    <div class="view-month-bar">
+      <button class="vmb-btn" onclick="changeMonth(-1)">‹</button>
+      <div style="flex:1;text-align:center">
+        <div class="vmb-month" id="vmb_month_savings"></div>
+        <div class="vmb-fy" id="vmb_fy_savings"></div>
+      </div>
+      <button class="vmb-btn" onclick="goToToday()" class="vmb-today" title="Jump to current month">Today</button>
+      <button class="vmb-btn" onclick="changeMonth(1)">›</button>
+    </div>
+
     <div class="tracker-header">
       <div class="comp-row" style="flex:1;margin-bottom:0">
         <div class="comp-bar-w"><div class="comp-bar" id="sCompBar"></div></div>
@@ -414,8 +461,21 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
         <div class="pt">Committed <span>Payouts</span></div>
         <div class="ps">Recurring payments · Sorted by due date · Monthly tracking</div>
       </div>
-      <button class="add-head-btn" onclick="addCommitted()">+ Add payout</button>
+      <div style="display:flex;gap:8px">
+        <button class="add-head-btn" onclick="cpCarryForward()" title="Copy last month amounts to this month">⟳ Copy last month</button>
+        <button class="add-head-btn" onclick="addCommitted()">+ Add payout</button>
+      </div>
     </div>
+    <div class="view-month-bar">
+      <button class="vmb-btn" onclick="changeMonth(-1)">‹</button>
+      <div style="flex:1;text-align:center">
+        <div class="vmb-month" id="vmb_month_committed"></div>
+        <div class="vmb-fy" id="vmb_fy_committed"></div>
+      </div>
+      <button class="vmb-btn" onclick="goToToday()" class="vmb-today" title="Jump to current month">Today</button>
+      <button class="vmb-btn" onclick="changeMonth(1)">›</button>
+    </div>
+
     <div class="tracker-header">
       <div class="comp-row" style="flex:1;margin-bottom:0">
         <div class="comp-bar-w"><div class="comp-bar" id="cpCompBar"></div></div>
@@ -446,6 +506,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
       <div><div class="pt">Net Worth <span style="color:#2563eb">Tracker</span></div><div class="ps">All asset classes · Fully editable · Historical trend</div></div>
       <button class="add-btn" onclick="addNWAsset()">+ Add asset</button>
     </div>
+    <div class="view-month-bar">
+      <button class="vmb-btn" onclick="changeMonth(-1)">‹</button>
+      <div style="flex:1;text-align:center">
+        <div class="vmb-month" id="vmb_month_networth"></div>
+        <div class="vmb-fy" id="vmb_fy_networth"></div>
+      </div>
+      <button class="vmb-btn" onclick="goToToday()" class="vmb-today" title="Jump to current month">Today</button>
+      <button class="vmb-btn" onclick="changeMonth(1)">›</button>
+    </div>
+
     <div class="nw-kpi-row" id="nwKpis"></div>
     <div class="card" style="margin-bottom:14px">
       <div class="ct">Net Worth History <span style="font-size:9px;color:var(--muted)">TNW in months of salary</span></div>
@@ -755,6 +825,11 @@ function showView(id,el){
   activeView=id; render();
 }
 function changeMonth(d){ currentMonth=Math.max(0,Math.min(11,currentMonth+d)); render(); }
+function goToToday(){
+  const det=detectFY();
+  currentFY=det.fy; currentMonth=det.month;
+  buildFYBtns(); render();
+}
 function setFY(fy){ currentFY=fy; currentMonth=0; buildFYBtns(); render(); }
 function toggleDrawer(){ document.getElementById('mobileDrawer').classList.toggle('open'); }
 function closeDrawer(){ document.getElementById('mobileDrawer').classList.remove('open'); }
@@ -786,14 +861,15 @@ function syncMobile(){
 /* Each item: {id, name, sub, dayOfMonth, budget, active, startMonth (0-11), startFY} */
 /* Frequency: 'monthly'|'quarterly'|'halfyearly'|'yearly' */
 /* payMethod: any string from CP_PAY_METHODS or custom */
-const CP_FREQ = ['Monthly','Quarterly','Half-Yearly','Yearly'];
-const CP_FREQ_VALS = ['monthly','quarterly','halfyearly','yearly'];
-/* Months in which a non-monthly item is due (0=Apr,1=May...) */
+const CP_FREQ = ['Monthly','Quarterly','Half-Yearly','Yearly','One-Time'];
+const CP_FREQ_VALS = ['monthly','quarterly','halfyearly','yearly','once'];
+/* Months in which a non-monthly item is due within an FY (0=Apr..11=Mar) */
 const CP_FREQ_MONTHS = {
   monthly:    [0,1,2,3,4,5,6,7,8,9,10,11],
   quarterly:  [0,3,6,9],
   halfyearly: [0,6],
   yearly:     [0],
+  once:       [], /* handled specially — due only in startMonth of startFY */
 };
 let CP_PAY_METHODS = LS('fp_cp_paymethods') || ['HDFC CC','RBL CC','OneCard','Bank Debit','Amazon Pay Later','NEFT/Transfer','Cash','Others'];
 
@@ -913,6 +989,10 @@ function render(){
   const {done,total}=comp(currentFY,currentMonth);
   document.getElementById('sideComp').textContent=`${done}/${total} checked`;
   syncMobile();
+  /* Update all in-view month bars */
+  const mn=FY_MONTHS[currentFY][currentMonth];
+  document.querySelectorAll('[id^="vmb_month_"]').forEach(el=>el.textContent=mn);
+  document.querySelectorAll('[id^="vmb_fy_"]').forEach(el=>el.textContent=currentFY);
   if(activeView==='dashboard')renderDash();
   else if(activeView==='expenses')renderTracker('expenses');
   else if(activeView==='expbreakdown')renderExpBreakdown();
@@ -1038,6 +1118,21 @@ function renderFYTrend(){
 /* ══════════════════════════════════════════════
    COMMITTED PAYOUTS — renderer
 ══════════════════════════════════════════════ */
+
+/* Copy last month's paid amounts to current month for items not yet entered */
+function cpCarryForward(){
+  const fy=currentFY, m=currentMonth;
+  if(m===0){ showToast('No previous month in this FY'); return; }
+  let copied=0;
+  cpItems.filter(h=>h.active!==false).forEach(h=>{
+    if(getCpA(fy,h.id,m)===0 && getCpA(fy,h.id,m-1)>0){
+      setCpA(fy,h.id,m,getCpA(fy,h.id,m-1));
+      copied++;
+    }
+  });
+  if(copied>0){ showToast(`✓ Copied ${copied} amounts from last month`); renderCommitted(); }
+  else showToast('Nothing to copy — enter amounts first');
+}
 function renderCommitted(){
   const fy=currentFY, m=currentMonth;
 
@@ -1070,10 +1165,12 @@ function renderCommitted(){
     const pm        = h.payMethod||'Others';
     /* For non-monthly items, budget applies only in due months */
     const dueMonths = CP_FREQ_MONTHS[freq]||CP_FREQ_MONTHS.monthly;
-    const isDueThisMonth = dueMonths.includes(m);
+    const isDueThisMonth = freq==='once'
+      ? (h.startFY===fy && h.startMonth===m)
+      : dueMonths.includes(m);
     const monthActual = getCpA(fy,h.id,m);
     /* Annual budget = budget × number of due months per year */
-    const annBudget   = (h.budget||0)*dueMonths.length;
+    const annBudget   = freq==='once' ? (h.budget||0) : (h.budget||0)*dueMonths.length;
     let ytdActual=0;
     for(let mm=0;mm<=m;mm++) ytdActual+=getCpA(fy,h.id,mm);
     const isDone = getCpC(fy,h.id,m);
@@ -1356,7 +1453,7 @@ function addCommitted(){
   const sub=prompt('Sub-label (e.g. HDFC Bank):')||'';
   const day=parseInt(prompt('Due day of month (1-31):')||'1')||1;
   const budget=parseFloat(prompt('Amount per occurrence (₹):')||'0')||0;
-  const freqChoice=prompt('Frequency:\n1 = Monthly\n2 = Quarterly\n3 = Half-Yearly\n4 = Yearly\n(type 1/2/3/4):','1');
+  const freqChoice=prompt('Frequency:\n1 = Monthly\n2 = Quarterly\n3 = Half-Yearly\n4 = Yearly\n5 = One-Time (this month only)\n(type 1-5):','1');
   const freq=CP_FREQ_VALS[parseInt(freqChoice||'1')-1]||'monthly';
   const pmList=CP_PAY_METHODS.map((p,i)=>`${i+1} = ${p}`).join('\n');
   const pmChoice=prompt('Payment method:\n'+pmList+'\n(type number, or type a new method name):','1');
@@ -1653,11 +1750,22 @@ function onChk(fy,cat,id,m){
   const d=getC(fy,cat,id,m);
   const row=document.getElementById(`r_${fy}_${cat}_${id}`);
   const btn=row?.querySelector('.check-btn');
-  if(row)row.classList.toggle('done',d);
-  if(btn)btn.classList.toggle('done',d);
-  renderTracker(cat);
+  if(row) row.classList.toggle('done',d);
+  if(btn) btn.classList.toggle('done',d);
+  /* Update completion bar without full re-render */
+  const list=heads[cat];
+  let catDone=0;
+  list.forEach(h=>{ if(getC(fy,cat,h.id,m)) catDone++; });
+  const pct=list.length?Math.round(catDone/list.length*100):0;
+  const cbId={expenses:'eCompBar',income:'iCompBar',savings:'sCompBar'}[cat];
+  const ctId={expenses:'eCompTxt',income:'iCompTxt',savings:'sCompTxt'}[cat];
+  const cbEl=document.getElementById(cbId);
+  const ctEl=document.getElementById(ctId);
+  if(cbEl) cbEl.style.width=pct+'%';
+  if(ctEl) ctEl.textContent=`${catDone}/${list.length} checked off`;
   const {done,total}=comp(fy,m);
   document.getElementById('sideComp').textContent=`${done}/${total} checked`;
+  save();
 }
 function addHead(cat){
   const name=prompt(`New ${cat} head name:`);if(!name)return;
