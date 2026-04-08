@@ -1096,8 +1096,11 @@ function renderCommitted(){
     /* Dim row if not due this month */
     const rowOpacity = isDueThisMonth?'1':'0.5';
 
-    html+=`<div class="tbl-row ${isDone?'done':''}" id="cpr_${fy}_${h.id}"
-        style="grid-template-columns:${GC};opacity:${rowOpacity}">
+    const rowBg = isDone
+      ? 'background:rgba(5,150,105,.08);border-color:rgba(5,150,105,.3);'
+      : '';
+    html+=`<div class="tbl-row" id="cpr_${fy}_${h.id}"
+        style="grid-template-columns:${GC};opacity:${rowOpacity};${rowBg}">
       <!-- Due day -->
       <div style="text-align:center">
         <div style="font-size:13px;font-weight:700;color:${dayCol}">${h.dayOfMonth}</div>
@@ -1120,7 +1123,7 @@ function renderCommitted(){
           ${freqOpts}
         </select>
         <div style="font-size:9px;color:var(--muted);margin-top:2px;text-align:center">
-          ${isDueThisMonth?'<span style="color:var(--green)">● Due</span>':'<span style="color:var(--muted)">○ Not due</span>'}
+          ${isDone?'<span style="color:var(--green);font-weight:600">✓ Paid</span>':isDueThisMonth?'<span style="color:var(--accent)">● Due</span>':'<span style="color:var(--muted)">○ Not due</span>'}
         </div>
       </div>
       <!-- Payment method -->
@@ -1267,16 +1270,32 @@ function cpToggle(fy,id,m){
   const done=getCpC(fy,id,m);
   const row=document.getElementById(`cpr_${fy}_${id}`);
   const btn=row?.querySelector('.check-btn');
-  if(row)row.classList.toggle('done',done);
-  if(btn)btn.classList.toggle('done',done);
+  if(row){
+    /* Green highlight when paid, normal when unpaid */
+    row.style.background = done ? 'rgba(5,150,105,.08)' : '';
+    row.style.borderColor = done ? 'rgba(5,150,105,.3)' : '';
+    /* Update the due/paid label inside the frequency cell */
+    const freqLabel = row.querySelectorAll('select')[0]?.parentElement?.querySelector('div:last-child');
+    if(freqLabel){
+      const h = cpItems.find(h=>h.id===id);
+      const dueMonths = CP_FREQ_MONTHS[(h&&h.freq)||'monthly']||CP_FREQ_MONTHS.monthly;
+      const isDueThisMonth = dueMonths.includes(m);
+      freqLabel.innerHTML = done
+        ? '<span style="color:var(--green);font-weight:600">✓ Paid</span>'
+        : isDueThisMonth
+          ? '<span style="color:var(--accent)">● Due</span>'
+          : '<span style="color:var(--muted)">○ Not due</span>';
+    }
+  }
+  if(btn) btn.classList.toggle('done', done);
+  /* Update completion bar */
   let d=0;
   cpItems.filter(h=>h.active!==false).forEach(h=>{if(getCpC(fy,h.id,m))d++;});
   const tot=cpItems.filter(h=>h.active!==false).length;
   const cb=document.getElementById('cpCompBar');
   const ct=document.getElementById('cpCompTxt');
-  if(cb)cb.style.width=(tot?Math.round(d/tot*100):0)+'%';
-  if(ct)ct.textContent=`${d}/${tot} paid this month`;
-  // re-render history
+  if(cb) cb.style.width=(tot?Math.round(d/tot*100):0)+'%';
+  if(ct) ct.textContent=`${d}/${tot} paid this month`;
   renderCpHistory(cpItems.filter(h=>h.active!==false).sort((a,b)=>a.dayOfMonth-b.dayOfMonth), fy);
   save();
 }
