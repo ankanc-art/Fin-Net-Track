@@ -417,7 +417,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
       <div style="text-align:right">This Month · YTD</div>
       <div style="text-align:right">Annual Remaining</div>
       <div style="text-align:right">YTD Used %</div>
-      <div style="text-align:center">Payment Method</div>
+      <div style="text-align:center">Payout Head</div>
       <div></div>
     </div>
     <div id="ebdRows"></div>
@@ -509,7 +509,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
       <div style="text-align:center">Due</div>
       <div>Payout</div>
       <div style="text-align:center">Frequency</div>
-      <div style="text-align:center">Payment Method</div>
+      <div style="text-align:center">Payout Head</div>
       <div style="text-align:right">Monthly Budget</div>
       <div style="text-align:right">This Month · YTD</div>
       <div style="text-align:right">Annual Remaining</div>
@@ -1008,7 +1008,7 @@ function syncMobile(){
 ══════════════════════════════════════════════ */
 /* Each item: {id, name, sub, dayOfMonth, budget, active, startMonth (0-11), startFY} */
 /* Frequency: 'monthly'|'quarterly'|'halfyearly'|'yearly' */
-/* payMethod: any string from CP_PAY_METHODS or custom */
+/* payHead: any string from CP_PAY_HEADS or custom */
 const CP_FREQ = ['Monthly','Quarterly','Half-Yearly','Yearly','One-Time'];
 const CP_FREQ_VALS = ['monthly','quarterly','halfyearly','yearly','once'];
 /* Months in which a non-monthly item is due within an FY (0=Apr..11=Mar) */
@@ -1019,17 +1019,17 @@ const CP_FREQ_MONTHS = {
   yearly:     [0],
   once:       [], /* handled specially — due only in startMonth of startFY */
 };
-let CP_PAY_METHODS = LS('fp_cp_paymethods') || ['HDFC CC','RBL CC','OneCard','Bank Debit','Amazon Pay Later','NEFT/Transfer','Cash','Others'];
+let CP_PAY_HEADS = LS('fp_cp_payheads') || ['CC Payout','Loans','Mobile/Data','Savings','Rent','Fees','Maintenance/Electricity','Others'];
 
 const DEF_COMMITTED = [
-  {id:'cp1',name:'House Loan EMI',     sub:'HDFC Bank',        dayOfMonth:5,  budget:81000, freq:'monthly',    payMethod:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp2',name:'Rent',               sub:'Monthly transfer', dayOfMonth:1,  budget:36667, freq:'monthly',    payMethod:'NEFT/Transfer', active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp3',name:'Sukanya Samriddhi',  sub:'HDFC Bank',        dayOfMonth:10, budget:12500, freq:'monthly',    payMethod:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp4',name:'MF SIP — PAYTM',    sub:'20K monthly SIP',  dayOfMonth:7,  budget:20000, freq:'monthly',    payMethod:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp5',name:'NPS Contribution',   sub:'ICICI — pension',  dayOfMonth:10, budget:5000,  freq:'monthly',    payMethod:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp6',name:'School Fees',        sub:'Quarterly',        dayOfMonth:15, budget:8000,  freq:'quarterly',  payMethod:'HDFC CC',       active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp7',name:'Bank Direct Debits', sub:'Auto-debit pool',  dayOfMonth:3,  budget:11240, freq:'monthly',    payMethod:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp8',name:'Insurance Premium',  sub:'Annual premium',   dayOfMonth:20, budget:5000,  freq:'yearly',     payMethod:'HDFC CC',       active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp1',name:'House Loan EMI',     sub:'HDFC Bank',        dayOfMonth:5,  budget:81000, freq:'monthly',    payHead:'Loans',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp2',name:'Rent',               sub:'Monthly transfer', dayOfMonth:1,  budget:36667, freq:'monthly',    payHead:'Rent', active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp3',name:'Sukanya Samriddhi',  sub:'HDFC Bank',        dayOfMonth:10, budget:12500, freq:'monthly',    payHead:'Loans',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp4',name:'MF SIP — PAYTM',    sub:'20K monthly SIP',  dayOfMonth:7,  budget:20000, freq:'monthly',    payHead:'Loans',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp5',name:'NPS Contribution',   sub:'ICICI — pension',  dayOfMonth:10, budget:5000,  freq:'monthly',    payHead:'Loans',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp6',name:'School Fees',        sub:'Quarterly',        dayOfMonth:15, budget:8000,  freq:'quarterly',  payHead:'CC Payout',       active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp7',name:'Bank Direct Debits', sub:'Auto-debit pool',  dayOfMonth:3,  budget:11240, freq:'monthly',    payHead:'Loans',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp8',name:'Insurance Premium',  sub:'Annual premium',   dayOfMonth:20, budget:5000,  freq:'yearly',     payHead:'CC Payout',       active:true,startMonth:0,startFY:'FY25-26'},
 ];
 
 let cpItems   = LS('fp_cp_items')   || JSON.parse(JSON.stringify(DEF_COMMITTED));
@@ -1299,18 +1299,18 @@ function renderCommitted(){
   const rowEl=document.getElementById('cpRows');
   if(!rowEl) return;
 
-  /* 10-column grid: due | name | freq | payMethod | budget | actual | diff | pct | actions | check */
+  /* 10-column grid: due | name | freq | payHead | budget | actual | diff | pct | actions | check */
   const GC='28px 1fr 110px 110px 110px 110px 100px 80px 50px 34px';
 
   const today=new Date().getDate();
   const freqColors={'monthly':'var(--accent)','quarterly':'#7c3aed','halfyearly':'#ea580c','yearly':'#dc2626'};
-  const pmColors={'HDFC CC':'#1d4ed8','RBL CC':'#6d28d9','OneCard':'#047857','Bank Debit':'#0f766e',
-                  'NEFT/Transfer':'#1e40af','Amazon Pay Later':'#b45309','Cash':'#374151','Others':'#6b7280'};
+  const pmColors={'CC Payout':'#1d4ed8','Loans':'#dc2626','Mobile/Data':'#0891b2','Savings':'#059669',
+                  'Rent':'#7c3aed','Fees':'#d97706','Maintenance/Electricity':'#65a30d','Others':'#6b7280'};
 
   let html='';
   sorted.forEach((h,idx)=>{
     const freq      = h.freq||'monthly';
-    const pm        = h.payMethod||'Others';
+    const pm        = h.payHead||'Others';
     /* For non-monthly items, budget applies only in due months */
     const dueMonths = CP_FREQ_MONTHS[freq]||CP_FREQ_MONTHS.monthly;
     const isDueThisMonth = freq==='once'
@@ -1334,8 +1334,8 @@ function renderCommitted(){
     const freqOpts=CP_FREQ_VALS.map((f,fi)=>
       `<option value="${f}"${f===freq?' selected':''}>${CP_FREQ[fi]}</option>`).join('');
 
-    /* Payment method dropdown — includes custom methods */
-    const pmOpts=CP_PAY_METHODS.map(p=>
+    /* Payout head dropdown */
+    const pmOpts=CP_PAY_HEADS.map(p=>
       `<option value="${p}"${p===pm?' selected':''}>${p}</option>`).join('');
 
     /* Dim row if not due this month */
@@ -1373,11 +1373,11 @@ function renderCommitted(){
       </div>
       <!-- Payment method -->
       <div style="padding:2px 4px">
-        <select class="pay-select" onchange="cpSetPayMethod('${h.id}',this.value)">
+        <select class="pay-select" onchange="cpSetPayHead('${h.id}',this.value)">
           ${pmOpts}
-          <option value="__add__">+ Add method…</option>
+          <option value="__add__">+ Add head…</option>
         </select>
-        <div style="font-size:9px;color:${pmColors[pm]||'var(--muted2)'};margin-top:2px;text-align:center;font-weight:500">${pm}</div>
+        <div style="font-size:9px;color:${pmColors[pm]||'var(--muted2)'};margin-top:2px;text-align:center;font-weight:600;background:${pmColors[pm]||'#6b7280'}18;border-radius:4px;padding:1px 4px">${pm}</div>
       </div>
       <!-- Budget -->
       <div style="text-align:right">
@@ -1454,56 +1454,109 @@ function renderCpHistory(sorted, fy){
   if(!el||!sorted.length) return;
   const months=FY_MONTHS[fy];
 
-  let html=`<div style="margin-bottom:10px">
+  let html=`<div style="margin-bottom:10px;margin-top:4px">
     <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding-bottom:8px;border-bottom:1px solid var(--border2)">
-      Monthly History — ${fy}
+      Monthly History — ${fy} &nbsp;<span style="color:var(--muted);font-weight:400">(grouped by Payout Head)</span>
     </div>
   </div>`;
 
-  // Table: rows = payouts, cols = months
-  const colW='70px';
+  const headColors={'CC Payout':'#1d4ed8','Loans':'#dc2626','Mobile/Data':'#0891b2','Savings':'#059669',
+    'Rent':'#7c3aed','Fees':'#d97706','Maintenance/Electricity':'#65a30d','Others':'#6b7280'};
+
+  /* Group items by payHead */
+  const groups={};
+  sorted.forEach(h=>{
+    const head=h.payHead||'Others';
+    if(!groups[head]) groups[head]=[];
+    groups[head].push(h);
+  });
+
+  /* Sort groups: keep defined heads order first, then custom ones */
+  const headOrder=['CC Payout','Loans','Rent','Savings','Fees','Mobile/Data','Maintenance/Electricity','Others'];
+  const sortedHeads=[
+    ...headOrder.filter(h=>groups[h]),
+    ...Object.keys(groups).filter(h=>!headOrder.includes(h))
+  ];
+
   html+=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
   <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:700px">
     <thead>
       <tr>
-        <th style="text-align:left;padding:6px 10px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:400;border-bottom:1px solid var(--border2);position:sticky;left:0;background:var(--bg)">Payout</th>
-        <th style="text-align:center;padding:4px 2px;color:var(--muted);font-size:9px;font-weight:400;width:30px;border-bottom:1px solid var(--border2)">Due</th>
-        ${months.map((mn,mi)=>`<th style="text-align:right;padding:6px 8px;color:${mi===currentMonth?'var(--accent)':'var(--muted)'};font-size:9px;font-weight:${mi===currentMonth?'600':'400'};border-bottom:1px solid var(--border2);min-width:${colW}">${mn}</th>`).join('')}
-        <th style="text-align:right;padding:6px 8px;color:var(--muted);font-size:9px;font-weight:400;border-bottom:1px solid var(--border2)">Total</th>
+        <th style="text-align:left;padding:6px 10px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:400;border-bottom:2px solid var(--border2);position:sticky;left:0;background:var(--bg)">Payout</th>
+        <th style="text-align:center;padding:4px 6px;color:var(--muted);font-size:9px;font-weight:400;width:30px;border-bottom:2px solid var(--border2)">Day</th>
+        ${months.map((mn,mi)=>`<th style="text-align:right;padding:6px 8px;color:${mi===currentMonth?'var(--accent)':'var(--muted)'};font-size:9px;font-weight:${mi===currentMonth?'600':'400'};border-bottom:2px solid var(--border2);min-width:70px">${mn}</th>`).join('')}
+        <th style="text-align:right;padding:6px 8px;color:var(--muted);font-size:9px;font-weight:400;border-bottom:2px solid var(--border2)">Total</th>
       </tr>
     </thead>
     <tbody>`;
 
-  sorted.forEach((h,idx)=>{
-    const rowTotal=FY_MONTHS[fy].reduce((_,__,mm)=>_+getCpA(fy,h.id,mm),0);
-    html+=`<tr style="background:${idx%2===0?'var(--s1)':'var(--s2)'}">
-      <td style="padding:8px 10px;font-weight:500;color:var(--text);position:sticky;left:0;background:${idx%2===0?'var(--s1)':'var(--s2)'}">
-        ${h.name}<div style="font-size:9px;color:var(--muted);margin-top:1px">${h.sub||''}</div>
+  let grandTotal=0;
+  const monthGrandTotals=new Array(12).fill(0);
+
+  sortedHeads.forEach(head=>{
+    const items=groups[head];
+    const col=headColors[head]||'#6b7280';
+    /* Group header row */
+    const groupMonthTotals=months.map((_,mi)=>items.reduce((s,h)=>s+getCpA(fy,h.id,mi),0));
+    const groupTotal=groupMonthTotals.reduce((a,b)=>a+b,0);
+    groupMonthTotals.forEach((v,mi)=>monthGrandTotals[mi]+=v);
+    grandTotal+=groupTotal;
+
+    html+=`<tr>
+      <td colspan="${12+3}" style="padding:6px 10px 4px;position:sticky;left:0;background:var(--bg)">
+        <span style="font-size:10px;font-weight:700;color:${col};text-transform:uppercase;letter-spacing:.06em;
+          background:${col}18;border-radius:5px;padding:3px 10px;display:inline-block">${head}</span>
+        <span style="font-size:9px;color:var(--muted);margin-left:8px">${items.length} item${items.length>1?'s':''} · ${fmt(groupTotal)} total</span>
       </td>
-      <td style="text-align:center;padding:4px 2px;color:var(--muted2);font-size:10px">${h.dayOfMonth}</td>
-      ${months.map((mn,mi)=>{
-        const v=getCpA(fy,h.id,mi);
-        const paid=getCpC(fy,h.id,mi);
-        const bgt=h.budget||0;
-        const col=v===0?'var(--muted)':v>=bgt?'var(--green)':'var(--yellow)';
-        const bg=mi===currentMonth?'rgba(37,99,235,.06)':'transparent';
-        return `<td style="text-align:right;padding:6px 8px;color:${col};background:${bg};border-left:${mi===currentMonth?'2px solid rgba(37,99,235,.2)':'none'}">
-          ${v>0?fmt(v):'—'}${paid?' <span style="color:var(--green);font-size:9px">✓</span>':''}
-        </td>`;
-      }).join('')}
-      <td style="text-align:right;padding:6px 8px;font-weight:600;color:${rowTotal>0?'var(--text)':'var(--muted)'}">${rowTotal>0?fmt(rowTotal):'—'}</td>
     </tr>`;
+
+    /* Item rows within group */
+    items.forEach((h,idx)=>{
+      const rowTotal=months.reduce((_,__,mm)=>_+getCpA(fy,h.id,mm),0);
+      const rowBg=idx%2===0?'var(--s1)':'var(--s2)';
+      html+=`<tr style="background:${rowBg}">
+        <td style="padding:7px 10px 7px 20px;font-weight:500;color:var(--text);position:sticky;left:0;background:${rowBg}">
+          ${h.name}
+          <div style="font-size:9px;color:var(--muted);margin-top:1px">${h.sub||''}</div>
+        </td>
+        <td style="text-align:center;padding:4px 6px;color:var(--muted2);font-size:10px">${h.dayOfMonth}</td>
+        ${months.map((mn,mi)=>{
+          const v=getCpA(fy,h.id,mi);
+          const paid=getCpC(fy,h.id,mi);
+          const bgt=h.budget||0;
+          const valCol=v===0?'var(--muted)':v>=bgt?'var(--green)':'var(--yellow)';
+          const bg=mi===currentMonth?'rgba(37,99,235,.06)':'transparent';
+          const border=mi===currentMonth?'border-left:2px solid rgba(37,99,235,.2)':'';
+          return `<td style="text-align:right;padding:6px 8px;color:${valCol};background:${bg};${border}">
+            ${v>0?fmt(v):'—'}${paid?' <span style="color:var(--green);font-size:9px">✓</span>':''}
+          </td>`;
+        }).join('')}
+        <td style="text-align:right;padding:6px 8px;font-weight:600;color:${rowTotal>0?'var(--text)':'var(--muted)'}">${rowTotal>0?fmt(rowTotal):'—'}</td>
+      </tr>`;
+    });
+
+    /* Group subtotal row */
+    html+=`<tr style="background:${col}10;border-top:1px solid ${col}30;border-bottom:1px solid ${col}30">
+      <td style="padding:6px 10px;font-weight:600;font-size:10px;color:${col};position:sticky;left:0;background:${col}10">${head} Total</td>
+      <td></td>
+      ${groupMonthTotals.map((v,mi)=>{
+        const bg=mi===currentMonth?'rgba(37,99,235,.06)':'transparent';
+        return `<td style="text-align:right;padding:6px 8px;font-weight:600;color:${v>0?col:'var(--muted)'};background:${bg}">${v>0?fmt(v):'—'}</td>`;
+      }).join('')}
+      <td style="text-align:right;padding:6px 8px;font-weight:700;color:${col}">${fmt(groupTotal)}</td>
+    </tr>
+    <tr style="height:6px"><td colspan="${12+3}"></td></tr>`;
   });
 
-  // Totals row
-  html+=`<tr style="background:var(--s3);border-top:1px solid var(--border2)">
-    <td style="padding:8px 10px;font-weight:600;color:var(--muted2);font-size:10px;text-transform:uppercase;position:sticky;left:0;background:var(--s3)">Monthly Total</td>
+  /* Grand total row */
+  html+=`<tr style="background:var(--s3);border-top:2px solid var(--border2)">
+    <td style="padding:8px 10px;font-weight:700;color:var(--text);font-size:11px;position:sticky;left:0;background:var(--s3)">Grand Total</td>
     <td></td>
-    ${months.map((mn,mi)=>{
-      const mTotal=sorted.reduce((s,h)=>s+getCpA(fy,h.id,mi),0);
-      return `<td style="text-align:right;padding:6px 8px;font-weight:600;color:${mTotal>0?'var(--text)':'var(--muted)'};background:${mi===currentMonth?'rgba(37,99,235,.06)':'transparent'}">${mTotal>0?fmt(mTotal):'—'}</td>`;
+    ${monthGrandTotals.map((v,mi)=>{
+      const bg=mi===currentMonth?'rgba(37,99,235,.08)':'transparent';
+      return `<td style="text-align:right;padding:6px 8px;font-weight:700;color:${v>0?'var(--text)':'var(--muted)'};background:${bg}">${v>0?fmt(v):'—'}</td>`;
     }).join('')}
-    <td style="text-align:right;padding:6px 8px;font-weight:700;color:var(--text)">${fmt(sorted.reduce((s,h)=>s+FY_MONTHS[fy].reduce((_,__,mm)=>_+getCpA(fy,h.id,mm),0),0))}</td>
+    <td style="text-align:right;padding:6px 8px;font-weight:800;color:var(--text)">${fmt(grandTotal)}</td>
   </tr>`;
 
   html+=`</tbody></table></div>`;
@@ -1558,20 +1611,20 @@ function cpSetFreq(id, val){
   const h=cpItems.find(h=>h.id===id); if(!h)return;
   h.freq=val; save(); renderCommitted();
 }
-function cpSetPayMethod(id, val){
+function cpSetPayHead(id, val){
   if(val==='__add__'){
-    const nm=prompt('New payment method name:');
+    const nm=prompt('New payout head name:');
     if(!nm||!nm.trim()) return;
     const trimmed=nm.trim();
-    if(!CP_PAY_METHODS.includes(trimmed)){
-      CP_PAY_METHODS.push(trimmed);
-      SS('fp_cp_paymethods', CP_PAY_METHODS);
+    if(!CP_PAY_HEADS.includes(trimmed)){
+      CP_PAY_HEADS.push(trimmed);
+      SS('fp_cp_payheads', CP_PAY_HEADS);
     }
     const h=cpItems.find(h=>h.id===id); if(!h)return;
-    h.payMethod=trimmed;
+    h.payHead=trimmed;
   } else {
     const h=cpItems.find(h=>h.id===id); if(!h)return;
-    h.payMethod=val;
+    h.payHead=val;
   }
   save(); renderCommitted();
 }
@@ -1603,13 +1656,13 @@ function addCommitted(){
   const budget=parseFloat(prompt('Amount per occurrence (₹):')||'0')||0;
   const freqChoice=prompt('Frequency:\n1 = Monthly\n2 = Quarterly\n3 = Half-Yearly\n4 = Yearly\n5 = One-Time (this month only)\n(type 1-5):','1');
   const freq=CP_FREQ_VALS[parseInt(freqChoice||'1')-1]||'monthly';
-  const pmList=CP_PAY_METHODS.map((p,i)=>`${i+1} = ${p}`).join('\n');
-  const pmChoice=prompt('Payment method:\n'+pmList+'\n(type number, or type a new method name):','1');
-  const pmIdx=parseInt(pmChoice)-1;
-  const payMethod=(pmIdx>=0&&pmIdx<CP_PAY_METHODS.length)?CP_PAY_METHODS[pmIdx]:(pmChoice&&pmChoice.trim()&&isNaN(pmChoice)?pmChoice.trim():'Others');
-  if(!CP_PAY_METHODS.includes(payMethod)){ CP_PAY_METHODS.push(payMethod); SS('fp_cp_paymethods',CP_PAY_METHODS); }
+  const phList=CP_PAY_HEADS.map((p,i)=>`${i+1} = ${p}`).join('\n');
+  const phChoice=prompt('Payout Head:\n'+phList+'\n(type number, or type a new head name):','1');
+  const phIdx=parseInt(phChoice)-1;
+  const payHead=(phIdx>=0&&phIdx<CP_PAY_HEADS.length)?CP_PAY_HEADS[phIdx]:(phChoice&&phChoice.trim()&&isNaN(phChoice)?phChoice.trim():'Others');
+  if(!CP_PAY_HEADS.includes(payHead)){ CP_PAY_HEADS.push(payHead); SS('fp_cp_payheads',CP_PAY_HEADS); }
   const id='cp'+Date.now();
-  cpItems.push({id,name,sub,dayOfMonth:Math.max(1,Math.min(31,day)),budget,freq,payMethod,active:true,startMonth:currentMonth,startFY:currentFY});
+  cpItems.push({id,name,sub,dayOfMonth:Math.max(1,Math.min(31,day)),budget,freq,payHead,active:true,startMonth:currentMonth,startFY:currentFY});
   FYS.forEach(fy=>{
     if(!cpActuals[fy])cpActuals[fy]={};
     cpActuals[fy][id]=new Array(12).fill(0);
