@@ -236,6 +236,20 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
 </style>
 </head>
 <body>
+
+<!-- SIGN-IN OVERLAY -->
+<div id="authOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:#f0f2f7;align-items:center;justify-content:center">
+  <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:40px 36px;max-width:360px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)">
+    <div style="font-family:Syne,sans-serif;font-size:24px;font-weight:800;color:#1a1f2e;margin-bottom:6px">Financial <span style="color:#2563eb">Plan</span></div>
+    <div style="font-size:11px;color:#8a92a6;letter-spacing:.06em;text-transform:uppercase;margin-bottom:28px">FY 2025–28 · Fin-Net-Track</div>
+    <button onclick="signInGoogle()" style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:13px 20px;border-radius:10px;border:1px solid rgba(0,0,0,.12);background:#fff;cursor:pointer;font-size:14px;font-family:'JetBrains Mono',monospace;color:#1a1f2e;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Sign in with Google
+    </button>
+    <div style="margin-top:12px;font-size:10px;color:#8a92a6">Sign in to sync across all your devices.<br>Your data stays private to your account.</div>
+    <button onclick="skipAuth()" style="margin-top:10px;background:transparent;border:none;color:#8a92a6;font-size:11px;cursor:pointer;text-decoration:underline;font-family:'JetBrains Mono',monospace">Continue without signing in →</button>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 <!-- ═══ MOBILE TOP NAV ═══ -->
 <div class="mobile-nav">
@@ -280,6 +294,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
   <div class="logo">
     <h1>Financial <span>Plan</span></h1>
     <p>FY 2025 – 2028</p>
+    <div id="userChip" style="display:none;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)">
+      <img id="userAvatar" src="" width="22" height="22" style="border-radius:50%;flex-shrink:0" onerror="this.style.display='none'">
+      <span id="userName" style="font-size:10px;color:#8492ab;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <button onclick="signOutUser()" style="background:transparent;border:1px solid rgba(255,255,255,.12);color:#8492ab;border-radius:5px;padding:2px 7px;font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace">Sign out</button>
+    </div>
   </div>
   <div class="nav-sec-lbl">Views</div>
   <div class="nav-item active" onclick="showView('dashboard',this)"><div class="nav-dot"></div>Dashboard</div>
@@ -530,6 +549,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
 </main>
 </div>
 </div>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script>
 /* ══════════════════════════════════════════════
    CONSTANTS
@@ -758,14 +780,125 @@ FYS.forEach(fy=>{
 });
 let ebdChecks = LS(KEYS.ebdChecks) || {};
 
+/* ══════════════════════════════════════════════
+   FIREBASE — fin-net-track
+══════════════════════════════════════════════ */
+const FB_CONFIG = {
+  apiKey:"AIzaSyDs2I4_-8E2tuWbmmuaqfK9Htm91lJ1wio",
+  authDomain:"fin-net-track.firebaseapp.com",
+  databaseURL:"https://fin-net-track-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"fin-net-track",
+  storageBucket:"fin-net-track.firebasestorage.app",
+  messagingSenderId:"559556813302",
+  appId:"1:559556813302:web:9232503bbeeb305cf227d7"
+};
+firebase.initializeApp(FB_CONFIG);
+const fbDb   = firebase.database();
+const fbAuth = firebase.auth();
+const DB_ROOT = 'users';
+let fbUser = null;
+
+function _payload(){
+  return {
+    heads,budgets,actuals,checks,nwSecs,nwHistory,
+    ebdHeads,ebdActuals,ebdChecks,
+    cpItems,cpActuals,cpChecks,
+    _ts:Date.now()
+  };
+}
+
+/* Save: localStorage immediately + Firebase in background */
 function save(){
   SS(KEYS.heads,heads); SS(KEYS.budgets,budgets); SS(KEYS.actuals,actuals);
   SS(KEYS.checks,checks); SS(KEYS.nw,nwSecs); SS(KEYS.nwh,nwHistory);
   SS(KEYS.ebdHeads,ebdHeads); SS(KEYS.ebdActuals,ebdActuals); SS(KEYS.ebdChecks,ebdChecks);
   SS('fp_cp_items',cpItems); SS('fp_cp_actuals',cpActuals); SS('fp_cp_checks',cpChecks);
   SS('fp_lastsaved',new Date().toISOString());
-  showToast('✓ Saved');
+  if(fbUser){
+    fbDb.ref(DB_ROOT+'/'+fbUser.uid).set(_payload())
+      .then(()=>showToast('✓ Saved to cloud ☁'))
+      .catch(()=>showToast('✓ Saved locally'));
+  } else {
+    showToast('✓ Saved locally');
+  }
 }
+
+/* Pull from Firebase after sign-in */
+function syncFromCloud(){
+  if(!fbUser) return;
+  fbDb.ref(DB_ROOT+'/'+fbUser.uid).once('value')
+    .then(snap=>{
+      const d=snap.val();
+      if(d && d.heads){
+        heads=d.heads; budgets=d.budgets; actuals=d.actuals;
+        checks=d.checks; nwSecs=d.nwSecs; nwHistory=d.nwHistory;
+        if(d.ebdHeads)   ebdHeads=d.ebdHeads;
+        if(d.ebdActuals) ebdActuals=d.ebdActuals;
+        if(d.ebdChecks)  ebdChecks=d.ebdChecks;
+        if(d.cpItems)    cpItems=d.cpItems;
+        if(d.cpActuals)  cpActuals=d.cpActuals;
+        if(d.cpChecks)   cpChecks=d.cpChecks;
+        /* fill any missing slots */
+        FYS.forEach(fy=>{
+          if(!budgets[fy])   budgets[fy]=JSON.parse(JSON.stringify(DEF_BUDGETS));
+          if(!actuals[fy])   actuals[fy]={expenses:{},income:{},savings:{}};
+          ['expenses','income','savings'].forEach(cat=>{
+            if(!actuals[fy][cat]) actuals[fy][cat]={};
+            heads[cat].forEach(h=>{if(!actuals[fy][cat][h.id]) actuals[fy][cat][h.id]=new Array(12).fill(0);});
+          });
+          if(!ebdActuals[fy]) ebdActuals[fy]={};
+          ebdHeads.forEach(h=>{if(!ebdActuals[fy][h.id]) ebdActuals[fy][h.id]=new Array(12).fill(0);});
+          if(!cpActuals[fy]) cpActuals[fy]={};
+          cpItems.forEach(h=>{if(!cpActuals[fy][h.id]) cpActuals[fy][h.id]=new Array(12).fill(0);});
+        });
+        render();
+        showToast('✓ Synced from cloud ☁');
+      } else {
+        /* First time — push local data up */
+        fbDb.ref(DB_ROOT+'/'+fbUser.uid).set(_payload()).catch(()=>{});
+        showToast('✓ Data backed up to cloud ☁');
+      }
+    })
+    .catch(()=>{ /* offline — local data already shown */ });
+}
+
+/* Auth functions */
+function signInGoogle(){
+  fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .catch(err=>alert('Sign-in failed: '+err.message));
+}
+function skipAuth(){
+  document.getElementById('authOverlay').style.display='none';
+}
+function signOutUser(){
+  fbUser=null;
+  fbAuth.signOut().then(()=>{
+    document.getElementById('userChip').style.display='none';
+    document.getElementById('authOverlay').style.display='flex';
+  });
+}
+function _showUserChip(user){
+  const chip=document.getElementById('userChip');
+  if(!chip) return;
+  chip.style.display='flex';
+  const nm=chip.querySelector('#userName');
+  const av=chip.querySelector('#userAvatar');
+  if(nm) nm.textContent=user.displayName||user.email;
+  if(av){ if(user.photoURL) av.src=user.photoURL; else av.style.display='none'; }
+}
+
+/* Auth listener — fires once on every page load */
+let _synced=false;
+fbAuth.onAuthStateChanged(user=>{
+  fbUser=user;
+  if(user){
+    document.getElementById('authOverlay').style.display='none';
+    _showUserChip(user);
+    if(!_synced){ _synced=true; syncFromCloud(); }
+  } else {
+    document.getElementById('authOverlay').style.display='flex';
+  }
+});
 
 function exportData(){
   const blob=new Blob([JSON.stringify({_v:3,_d:new Date().toISOString(),
