@@ -249,7 +249,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
 <body>
 
 <!-- SIGN-IN OVERLAY -->
-<div id="authOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:#f0f2f7;align-items:center;justify-content:center">
+<div id="authOverlay" style="display:flex;position:fixed;inset:0;z-index:9000;background:#f0f2f7;align-items:center;justify-content:center">
   <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:40px 36px;max-width:360px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)">
     <div style="font-family:Syne,sans-serif;font-size:24px;font-weight:800;color:#1a1f2e;margin-bottom:6px">Financial <span style="color:#2563eb">Plan</span></div>
     <div style="font-size:11px;color:#8a92a6;letter-spacing:.06em;text-transform:uppercase;margin-bottom:28px">FY 2025–28 · Fin-Net-Track</div>
@@ -985,6 +985,7 @@ function signInGoogle(){
 }
 function skipAuth(){
   document.getElementById('authOverlay').style.display='none';
+  if(!_appBooted){ _appBooted=true; buildFYBtns(); render(); }
 }
 function signOutUser(){
   fbUser=null;
@@ -1005,6 +1006,7 @@ function _showUserChip(user){
 
 /* Auth listener — fires once on every page load */
 let _synced=false;
+let _appBooted = false;
 fbAuth.onAuthStateChanged(user=>{
   fbUser=user;
   if(user){
@@ -1013,6 +1015,12 @@ fbAuth.onAuthStateChanged(user=>{
     if(!_synced){ _synced=true; syncFromCloud(); }
   } else {
     document.getElementById('authOverlay').style.display='flex';
+  }
+  /* Boot the app on first auth resolution regardless of sign-in state */
+  if(!_appBooted){
+    _appBooted=true;
+    buildFYBtns();
+    render();
   }
 });
 
@@ -1219,9 +1227,10 @@ function getEbdC(fy,id,m){ return !!(ebdChecks[`${fy}_${id}_${m}`]); }
 function togEbdC(fy,id,m){ const k=`${fy}_${id}_${m}`; ebdChecks[k]=!ebdChecks[k]; save(); }
 
 /* ══ INIT ══ */
-buildFYBtns();
-render();
-(()=>{
+/* App boots inside onAuthStateChanged so Firebase is guaranteed loaded */
+window.addEventListener('resize',()=>{ if(activeView==='dashboard') renderDash(); });
+/* Update last saved label once DOM is ready */
+window.addEventListener('DOMContentLoaded',()=>{
   const ls=LS('fp_lastsaved');
   const el=document.getElementById('lastSavedLbl');
   if(el&&ls){
@@ -1229,8 +1238,7 @@ render();
     el.textContent='Saved: '+d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+
       ' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
   }
-})();
-window.addEventListener('resize',()=>{ if(activeView==='dashboard') renderDash(); });
+});
 
 
 function buildFYBtns(){document.getElementById('fyBtns').innerHTML=FYS.map(fy=>`<button class="fy-btn${fy===currentFY?' active':''}" onclick="setFY('${fy}')">${fy}</button>`).join('');}
