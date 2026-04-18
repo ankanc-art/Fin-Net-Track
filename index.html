@@ -135,26 +135,19 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
 .tbl-row{display:grid;grid-template-columns:1fr 120px 120px 100px 90px 38px;gap:8px;align-items:center;padding:10px 12px;border-radius:8px;border:1px solid var(--border);margin-bottom:5px;background:var(--s1);transition:opacity .2s;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
 .tbl-row:hover{border-color:var(--border2);box-shadow:0 2px 6px rgba(0,0,0,0.06)}
 .tbl-row.done{opacity:.45}
+.st-tab{padding:9px 18px;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--muted2);font-family:var(--fd);font-size:12px;cursor:pointer;margin-bottom:-2px;transition:all .15s}
+.st-tab:hover{color:var(--text)}
+.st-tab-active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.st-tx-row{display:grid;grid-template-columns:80px 1fr 100px 130px 40px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:11px;align-items:center;transition:background .1s}
+.st-tx-row:hover{background:var(--s1)}
+.st-tx-row.skipped{opacity:.35;text-decoration:line-through}
+
 /* month selector bar inside views */
 .view-month-bar{display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:10px 14px;background:var(--s1);border:1px solid var(--border);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .vmb-btn{background:var(--s2);border:1px solid var(--border2);color:var(--muted2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .vmb-btn:hover{background:var(--s3);color:var(--text)}
 .vmb-month{font-family:var(--fd);font-size:16px;font-weight:700;color:var(--text);flex:1;text-align:center;letter-spacing:-.01em}
 .vmb-fy{font-size:10px;color:var(--muted);text-align:center;margin-top:1px}
-
-/* Statements tab */
-.st-tab{padding:9px 18px;border:none;border-bottom:2px solid transparent;background:transparent;
-  color:var(--muted2);font-family:var(--fd);font-size:12px;cursor:pointer;margin-bottom:-2px;transition:all .15s}
-.st-tab:hover{color:var(--text)}
-.st-tab-active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
-.st-tx-row{display:grid;grid-template-columns:80px 1fr 100px 130px 40px;gap:0;
-  padding:8px 12px;border-bottom:1px solid var(--border);font-size:11px;align-items:center;transition:background .1s}
-.st-tx-row:hover{background:var(--s1)}
-.st-tx-row.skipped{opacity:.35;text-decoration:line-through}
-.pay-select{width:100%;padding:4px 6px;border-radius:6px;border:1px solid var(--border2);
-  background:var(--s2);color:var(--text);font-family:var(--fd);font-size:10px;cursor:pointer}
-.head-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:600}
-
 .vmb-today{font-size:10px;color:var(--accent);cursor:pointer;padding:4px 10px;border-radius:6px;background:var(--accent-bg);border:1px solid var(--accent-border);white-space:nowrap}
 .row-name{font-size:12px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:7px}
 .row-sub{font-size:10px;color:var(--muted);margin-top:2px}
@@ -434,7 +427,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
       <div style="text-align:right">This Month · YTD</div>
       <div style="text-align:right">Annual Remaining</div>
       <div style="text-align:right">YTD Used %</div>
-      <div style="text-align:center">Payout Head</div>
+      <div style="text-align:center">Payment Method</div>
       <div></div>
     </div>
     <div id="ebdRows"></div>
@@ -526,7 +519,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
       <div style="text-align:center">Due</div>
       <div>Payout</div>
       <div style="text-align:center">Frequency</div>
-      <div style="text-align:center">Payout Head</div>
+      <div style="text-align:center">Payment Method</div>
       <div style="text-align:right">Monthly Budget</div>
       <div style="text-align:right">This Month · YTD</div>
       <div style="text-align:right">Annual Remaining</div>
@@ -570,50 +563,43 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
   <!-- STATEMENTS -->
   <div class="view" id="view-statements">
     <div class="ph">
-      <div>
-        <div class="pt">Statements <span>Analyser</span></div>
-        <div class="ps">Upload bank &amp; CC statements · Auto-categorise · Monthly tracking</div>
-      </div>
+      <div><div class="pt">Statements <span>Analyser</span></div>
+      <div class="ps">Upload PDF statements · Auto-categorise · Full-year summary</div></div>
     </div>
-
-    <!-- Month bar -->
-    <div class="view-month-bar">
+    <!-- Sub-tabs -->
+    <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border2)">
+      <button id="stTab_upload"  onclick="stSwitchTab('upload')"  class="st-tab st-tab-active">⬆ Upload</button>
+      <button id="stTab_review"  onclick="stSwitchTab('review')"  class="st-tab">📋 Review</button>
+      <button id="stTab_summary" onclick="stSwitchTab('summary')" class="st-tab">📊 Summary</button>
+    </div>
+    <!-- Month bar shared -->
+    <div class="view-month-bar" style="margin-bottom:16px">
       <button class="vmb-btn" onclick="changeMonth(-1)">‹</button>
       <div style="flex:1;text-align:center">
         <div class="vmb-month" id="vmb_month_statements"></div>
         <div class="vmb-fy" id="vmb_fy_statements"></div>
       </div>
-      <button class="vmb-btn" onclick="goToToday()" title="Jump to current month">Today</button>
+      <button class="vmb-btn" onclick="goToToday()" title="Today">Today</button>
       <button class="vmb-btn" onclick="changeMonth(1)">›</button>
-    </div>
-
-    <!-- Tabs: Upload | Review | Summary -->
-    <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border2)">
-      <button id="stTab_upload"   onclick="stSwitchTab('upload')"   class="st-tab st-tab-active">⬆ Upload</button>
-      <button id="stTab_review"   onclick="stSwitchTab('review')"   class="st-tab">📋 Review</button>
-      <button id="stTab_summary"  onclick="stSwitchTab('summary')"  class="st-tab">📊 Summary</button>
     </div>
 
     <!-- UPLOAD PANEL -->
     <div id="stPanel_upload">
-      <div style="display:flex;flex-direction:column;gap:12px;max-width:580px">
-        <div style="background:var(--s1);border:2px dashed var(--border2);border-radius:12px;padding:28px;text-align:center;cursor:pointer" onclick="document.getElementById('stFileInput').click()">
-          <div style="font-size:28px;margin-bottom:8px">📄</div>
-          <div style="font-family:var(--fd);font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Click to upload PDF statements</div>
-          <div style="font-size:11px;color:var(--muted)">HDFC · Kotak · Federal Bank · Axis · any Indian bank CC/bank statement</div>
+      <div style="max-width:560px;display:flex;flex-direction:column;gap:10px">
+        <div onclick="document.getElementById('stFileInput').click()"
+          style="background:var(--s1);border:2px dashed var(--border2);border-radius:12px;padding:28px;text-align:center;cursor:pointer">
+          <div style="font-size:28px;margin-bottom:6px">📄</div>
+          <div style="font-family:var(--fd);font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">Click to select PDF or CSV statements</div>
+          <div style="font-size:11px;color:var(--muted)">HDFC · Kotak · Federal Bank · Axis · SBI · any Indian bank</div>
           <input id="stFileInput" type="file" accept=".pdf,.csv" multiple style="display:none" onchange="stHandleFiles(this.files)">
         </div>
-
-        <!-- Password input -->
-        <div style="display:flex;gap:8px;align-items:center">
-          <input id="stPassword" type="password" placeholder="PDF password (if protected)" 
+        <div style="display:flex;gap:8px">
+          <input id="stPassword" type="password" placeholder="PDF password (if protected)"
             style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--s1);color:var(--text);font-family:var(--fd);font-size:12px">
-          <button onclick="document.getElementById('stPassword').type=document.getElementById('stPassword').type==='password'?'text':'password'"
-            style="padding:9px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);cursor:pointer;font-size:11px;font-family:var(--fd)">Show</button>
+          <button onclick="var i=document.getElementById('stPassword');i.type=i.type==='password'?'text':'password'"
+            style="padding:9px 14px;border-radius:8px;border:1px solid var(--border2);background:var(--s2);color:var(--muted2);cursor:pointer;font-size:11px;font-family:var(--fd)">Show</button>
         </div>
-
-        <!-- Source label -->
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:8px">
           <select id="stSourceType" style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--s1);color:var(--text);font-family:var(--fd);font-size:12px">
             <option value="hdfc_cc">HDFC Credit Card</option>
             <option value="hdfc_bank">HDFC Bank Account</option>
@@ -624,29 +610,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
             <option value="sbi_cc">SBI Credit Card</option>
             <option value="other">Other / Auto-detect</option>
           </select>
-          <button onclick="stProcessFiles()" 
-            style="padding:9px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-family:var(--fd);font-size:12px;font-weight:600;white-space:nowrap">
-            Parse →
-          </button>
+          <button onclick="stProcessFiles()"
+            style="padding:9px 20px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-family:var(--fd);font-size:12px;font-weight:600;white-space:nowrap">Parse →</button>
         </div>
-
-        <!-- Upload progress/log -->
-        <div id="stUploadLog" style="display:none;background:var(--s2);border-radius:8px;padding:12px;font-family:var(--fd);font-size:11px;color:var(--muted2);max-height:160px;overflow-y:auto;line-height:1.8"></div>
-
-        <!-- Uploaded files list -->
         <div id="stFileList" style="display:none">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px">Loaded Statements</div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">Files ready to parse</div>
           <div id="stFileItems"></div>
         </div>
+        <div id="stUploadLog" style="display:none;background:var(--s2);border-radius:8px;padding:12px;font-family:var(--fd);font-size:11px;color:var(--muted2);max-height:180px;overflow-y:auto;line-height:1.9"></div>
       </div>
     </div>
 
     <!-- REVIEW PANEL -->
     <div id="stPanel_review" style="display:none">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
-        <div style="font-size:11px;color:var(--muted)" id="stReviewCount"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+        <div id="stReviewCount" style="font-size:11px;color:var(--muted);font-family:var(--fd)"></div>
         <div style="flex:1"></div>
-        <select id="stFilterHead" onchange="stRenderReview()" 
+        <select id="stFilterHead" onchange="stRenderReview()"
           style="padding:6px 10px;border-radius:7px;border:1px solid var(--border2);background:var(--s1);color:var(--text);font-family:var(--fd);font-size:11px">
           <option value="">All heads</option>
         </select>
@@ -654,24 +634,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
           style="padding:6px 10px;border-radius:7px;border:1px solid var(--border2);background:var(--s1);color:var(--text);font-family:var(--fd);font-size:11px">
           <option value="">All sources</option>
         </select>
-        <button onclick="stClearMonth()" 
-          style="padding:6px 12px;border-radius:7px;border:1px solid var(--red);background:var(--red-bg);color:var(--red);font-family:var(--fd);font-size:11px;cursor:pointer">
-          Clear month
-        </button>
+        <button onclick="stClearMonth()"
+          style="padding:6px 12px;border-radius:7px;border:1px solid var(--red);background:var(--red-bg);color:var(--red);font-family:var(--fd);font-size:11px;cursor:pointer">Clear month</button>
       </div>
-
-      <!-- Transaction table header -->
-      <div style="display:grid;grid-template-columns:80px 1fr 100px 130px 40px;gap:0;background:var(--s3);border-radius:8px 8px 0 0;padding:8px 12px;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-family:var(--fd)">
-        <div>Date</div>
-        <div>Description</div>
-        <div style="text-align:right">Amount</div>
-        <div style="text-align:center">Payout Head</div>
-        <div style="text-align:center">Skip</div>
+      <div style="display:grid;grid-template-columns:80px 1fr 100px 130px 40px;background:var(--s3);border-radius:8px 8px 0 0;padding:8px 12px;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-family:var(--fd)">
+        <div>Date</div><div>Description</div><div style="text-align:right">Amount</div><div style="text-align:center">Payout Head</div><div style="text-align:center">Skip</div>
       </div>
       <div id="stReviewRows"></div>
-
-      <!-- Totals bar -->
-      <div id="stReviewTotals" style="margin-top:12px;padding:12px;background:var(--s1);border-radius:8px;font-family:var(--fd);font-size:11px"></div>
+      <div id="stReviewTotals" style="margin-top:10px;padding:12px;background:var(--s1);border-radius:8px"></div>
     </div>
 
     <!-- SUMMARY PANEL -->
@@ -1152,17 +1122,20 @@ const CP_FREQ_MONTHS = {
   yearly:     [0],
   once:       [], /* handled specially — due only in startMonth of startFY */
 };
+const CP_FREQ = ['Monthly','Quarterly','Half-Yearly','Yearly','One-Time'];
+const CP_FREQ_VALS = ['monthly','quarterly','halfyearly','yearly','once'];
+const CP_FREQ_MONTHS = {monthly:[0,1,2,3,4,5,6,7,8,9,10,11],quarterly:[0,3,6,9],halfyearly:[0,6],yearly:[0],once:[]};
 let CP_PAY_HEADS = LS('fp_cp_payheads') || ['CC Payout','Loans','Mobile/Data','Savings','Rent','Fees','Maintenance/Electricity','Others'];
 
 const DEF_COMMITTED = [
-  {id:'cp1',name:'House Loan EMI',     sub:'HDFC Bank',        dayOfMonth:5,  budget:81000, freq:'monthly',    payHead:'Loans',    active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp2',name:'Rent',               sub:'Monthly transfer', dayOfMonth:1,  budget:36667, freq:'monthly',    payHead:'Rent', active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp3',name:'Sukanya Samriddhi',  sub:'HDFC Bank',        dayOfMonth:10, budget:12500, freq:'monthly',    payHead:'Loans',    active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp4',name:'MF SIP — PAYTM',    sub:'20K monthly SIP',  dayOfMonth:7,  budget:20000, freq:'monthly',    payHead:'Loans',    active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp5',name:'NPS Contribution',   sub:'ICICI — pension',  dayOfMonth:10, budget:5000,  freq:'monthly',    payHead:'Loans',    active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp6',name:'School Fees',        sub:'Quarterly',        dayOfMonth:15, budget:8000,  freq:'quarterly',  payHead:'CC Payout',       active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp7',name:'Bank Direct Debits', sub:'Auto-debit pool',  dayOfMonth:3,  budget:11240, freq:'monthly',    payHead:'Loans',    active:true,startMonth:0,startFY:'FY25-26'},
-  {id:'cp8',name:'Insurance Premium',  sub:'Annual premium',   dayOfMonth:20, budget:5000,  freq:'yearly',     payHead:'CC Payout',       active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp1',name:'House Loan EMI',     sub:'HDFC Bank',        dayOfMonth:5,  budget:81000, freq:'monthly',    payHead:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp2',name:'Rent',               sub:'Monthly transfer', dayOfMonth:1,  budget:36667, freq:'monthly',    payHead:'NEFT/Transfer', active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp3',name:'Sukanya Samriddhi',  sub:'HDFC Bank',        dayOfMonth:10, budget:12500, freq:'monthly',    payHead:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp4',name:'MF SIP — PAYTM',    sub:'20K monthly SIP',  dayOfMonth:7,  budget:20000, freq:'monthly',    payHead:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp5',name:'NPS Contribution',   sub:'ICICI — pension',  dayOfMonth:10, budget:5000,  freq:'monthly',    payHead:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp6',name:'School Fees',        sub:'Quarterly',        dayOfMonth:15, budget:8000,  freq:'quarterly',  payHead:'HDFC CC',       active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp7',name:'Bank Direct Debits', sub:'Auto-debit pool',  dayOfMonth:3,  budget:11240, freq:'monthly',    payHead:'Bank Debit',    active:true,startMonth:0,startFY:'FY25-26'},
+  {id:'cp8',name:'Insurance Premium',  sub:'Annual premium',   dayOfMonth:20, budget:5000,  freq:'yearly',     payHead:'HDFC CC',       active:true,startMonth:0,startFY:'FY25-26'},
 ];
 
 let cpItems   = LS('fp_cp_items')   || JSON.parse(JSON.stringify(DEF_COMMITTED));
@@ -1185,25 +1158,6 @@ function setCpA(fy,id,m,v){
 }
 function getCpC(fy,id,m){ return !!(cpChecks[fy+'_'+id+'_'+m]); }
 function togCpC(fy,id,m){ const k=fy+'_'+id+'_'+m; cpChecks[k]=!cpChecks[k]; save(); }
-
-
-/* ══════════════════════════════════════════════
-   STATEMENTS — state
-   stData[fy][monthIdx] = { sources:[], txns:[] }
-   txn: {id, date, desc, amount, head, source, skipped}
-══════════════════════════════════════════════ */
-let stData = LS('fp_st_data') || {};
-let stPendingFiles = []; // files queued for parsing
-
-function stSaveData(){
-  SS('fp_st_data', stData);
-  if(typeof save === 'function') save();
-}
-function stGetMonth(fy, m){
-  if(!stData[fy]) stData[fy] = {};
-  if(!stData[fy][m]) stData[fy][m] = {sources:[], txns:[]};
-  return stData[fy][m];
-}
 
 /* ── accessors ── */
 function getA(fy,cat,id,m){ return (actuals[fy]&&actuals[fy][cat]&&actuals[fy][cat][id]&&actuals[fy][cat][id][m])||0; }
@@ -1457,8 +1411,8 @@ function renderCommitted(){
 
   const today=new Date().getDate();
   const freqColors={'monthly':'var(--accent)','quarterly':'#7c3aed','halfyearly':'#ea580c','yearly':'#dc2626'};
-  const pmColors={'CC Payout':'#1d4ed8','Loans':'#dc2626','Mobile/Data':'#0891b2','Savings':'#059669',
-                  'Rent':'#7c3aed','Fees':'#d97706','Maintenance/Electricity':'#65a30d','Others':'#6b7280'};
+  const pmColors={'HDFC CC':'#1d4ed8','RBL CC':'#6d28d9','OneCard':'#047857','Bank Debit':'#0f766e',
+                  'NEFT/Transfer':'#1e40af','Amazon Pay Later':'#b45309','Cash':'#374151','Others':'#6b7280'};
 
   let html='';
   sorted.forEach((h,idx)=>{
@@ -1487,7 +1441,7 @@ function renderCommitted(){
     const freqOpts=CP_FREQ_VALS.map((f,fi)=>
       `<option value="${f}"${f===freq?' selected':''}>${CP_FREQ[fi]}</option>`).join('');
 
-    /* Payout head dropdown */
+    /* Payment method dropdown — includes custom methods */
     const pmOpts=CP_PAY_HEADS.map(p=>
       `<option value="${p}"${p===pm?' selected':''}>${p}</option>`).join('');
 
@@ -1526,11 +1480,11 @@ function renderCommitted(){
       </div>
       <!-- Payment method -->
       <div style="padding:2px 4px">
-        <select class="pay-select" onchange="cpSetPayHead('${h.id}',this.value)">
+        <select class="pay-select" onchange="cpSetPayMethod('${h.id}',this.value)">
           ${pmOpts}
-          <option value="__add__">+ Add head…</option>
+          <option value="__add__">+ Add method…</option>
         </select>
-        <div style="font-size:9px;color:${pmColors[pm]||'var(--muted2)'};margin-top:2px;text-align:center;font-weight:600;background:${pmColors[pm]||'#6b7280'}18;border-radius:4px;padding:1px 4px">${pm}</div>
+        <div style="font-size:9px;color:${pmColors[pm]||'var(--muted2)'};margin-top:2px;text-align:center;font-weight:500">${pm}</div>
       </div>
       <!-- Budget -->
       <div style="text-align:right">
@@ -1607,109 +1561,56 @@ function renderCpHistory(sorted, fy){
   if(!el||!sorted.length) return;
   const months=FY_MONTHS[fy];
 
-  let html=`<div style="margin-bottom:10px;margin-top:4px">
+  let html=`<div style="margin-bottom:10px">
     <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding-bottom:8px;border-bottom:1px solid var(--border2)">
-      Monthly History — ${fy} &nbsp;<span style="color:var(--muted);font-weight:400">(grouped by Payout Head)</span>
+      Monthly History — ${fy}
     </div>
   </div>`;
 
-  const headColors={'CC Payout':'#1d4ed8','Loans':'#dc2626','Mobile/Data':'#0891b2','Savings':'#059669',
-    'Rent':'#7c3aed','Fees':'#d97706','Maintenance/Electricity':'#65a30d','Others':'#6b7280'};
-
-  /* Group items by payHead */
-  const groups={};
-  sorted.forEach(h=>{
-    const head=h.payHead||'Others';
-    if(!groups[head]) groups[head]=[];
-    groups[head].push(h);
-  });
-
-  /* Sort groups: keep defined heads order first, then custom ones */
-  const headOrder=['CC Payout','Loans','Rent','Savings','Fees','Mobile/Data','Maintenance/Electricity','Others'];
-  const sortedHeads=[
-    ...headOrder.filter(h=>groups[h]),
-    ...Object.keys(groups).filter(h=>!headOrder.includes(h))
-  ];
-
+  // Table: rows = payouts, cols = months
+  const colW='70px';
   html+=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
   <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:700px">
     <thead>
       <tr>
-        <th style="text-align:left;padding:6px 10px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:400;border-bottom:2px solid var(--border2);position:sticky;left:0;background:var(--bg)">Payout</th>
-        <th style="text-align:center;padding:4px 6px;color:var(--muted);font-size:9px;font-weight:400;width:30px;border-bottom:2px solid var(--border2)">Day</th>
-        ${months.map((mn,mi)=>`<th style="text-align:right;padding:6px 8px;color:${mi===currentMonth?'var(--accent)':'var(--muted)'};font-size:9px;font-weight:${mi===currentMonth?'600':'400'};border-bottom:2px solid var(--border2);min-width:70px">${mn}</th>`).join('')}
-        <th style="text-align:right;padding:6px 8px;color:var(--muted);font-size:9px;font-weight:400;border-bottom:2px solid var(--border2)">Total</th>
+        <th style="text-align:left;padding:6px 10px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:400;border-bottom:1px solid var(--border2);position:sticky;left:0;background:var(--bg)">Payout</th>
+        <th style="text-align:center;padding:4px 2px;color:var(--muted);font-size:9px;font-weight:400;width:30px;border-bottom:1px solid var(--border2)">Due</th>
+        ${months.map((mn,mi)=>`<th style="text-align:right;padding:6px 8px;color:${mi===currentMonth?'var(--accent)':'var(--muted)'};font-size:9px;font-weight:${mi===currentMonth?'600':'400'};border-bottom:1px solid var(--border2);min-width:${colW}">${mn}</th>`).join('')}
+        <th style="text-align:right;padding:6px 8px;color:var(--muted);font-size:9px;font-weight:400;border-bottom:1px solid var(--border2)">Total</th>
       </tr>
     </thead>
     <tbody>`;
 
-  let grandTotal=0;
-  const monthGrandTotals=new Array(12).fill(0);
-
-  sortedHeads.forEach(head=>{
-    const items=groups[head];
-    const col=headColors[head]||'#6b7280';
-    /* Group header row */
-    const groupMonthTotals=months.map((_,mi)=>items.reduce((s,h)=>s+getCpA(fy,h.id,mi),0));
-    const groupTotal=groupMonthTotals.reduce((a,b)=>a+b,0);
-    groupMonthTotals.forEach((v,mi)=>monthGrandTotals[mi]+=v);
-    grandTotal+=groupTotal;
-
-    html+=`<tr>
-      <td colspan="${12+3}" style="padding:6px 10px 4px;position:sticky;left:0;background:var(--bg)">
-        <span style="font-size:10px;font-weight:700;color:${col};text-transform:uppercase;letter-spacing:.06em;
-          background:${col}18;border-radius:5px;padding:3px 10px;display:inline-block">${head}</span>
-        <span style="font-size:9px;color:var(--muted);margin-left:8px">${items.length} item${items.length>1?'s':''} · ${fmt(groupTotal)} total</span>
+  sorted.forEach((h,idx)=>{
+    const rowTotal=FY_MONTHS[fy].reduce((_,__,mm)=>_+getCpA(fy,h.id,mm),0);
+    html+=`<tr style="background:${idx%2===0?'var(--s1)':'var(--s2)'}">
+      <td style="padding:8px 10px;font-weight:500;color:var(--text);position:sticky;left:0;background:${idx%2===0?'var(--s1)':'var(--s2)'}">
+        ${h.name}<div style="font-size:9px;color:var(--muted);margin-top:1px">${h.sub||''}</div>
       </td>
-    </tr>`;
-
-    /* Item rows within group */
-    items.forEach((h,idx)=>{
-      const rowTotal=months.reduce((_,__,mm)=>_+getCpA(fy,h.id,mm),0);
-      const rowBg=idx%2===0?'var(--s1)':'var(--s2)';
-      html+=`<tr style="background:${rowBg}">
-        <td style="padding:7px 10px 7px 20px;font-weight:500;color:var(--text);position:sticky;left:0;background:${rowBg}">
-          ${h.name}
-          <div style="font-size:9px;color:var(--muted);margin-top:1px">${h.sub||''}</div>
-        </td>
-        <td style="text-align:center;padding:4px 6px;color:var(--muted2);font-size:10px">${h.dayOfMonth}</td>
-        ${months.map((mn,mi)=>{
-          const v=getCpA(fy,h.id,mi);
-          const paid=getCpC(fy,h.id,mi);
-          const bgt=h.budget||0;
-          const valCol=v===0?'var(--muted)':v>=bgt?'var(--green)':'var(--yellow)';
-          const bg=mi===currentMonth?'rgba(37,99,235,.06)':'transparent';
-          const border=mi===currentMonth?'border-left:2px solid rgba(37,99,235,.2)':'';
-          return `<td style="text-align:right;padding:6px 8px;color:${valCol};background:${bg};${border}">
-            ${v>0?fmt(v):'—'}${paid?' <span style="color:var(--green);font-size:9px">✓</span>':''}
-          </td>`;
-        }).join('')}
-        <td style="text-align:right;padding:6px 8px;font-weight:600;color:${rowTotal>0?'var(--text)':'var(--muted)'}">${rowTotal>0?fmt(rowTotal):'—'}</td>
-      </tr>`;
-    });
-
-    /* Group subtotal row */
-    html+=`<tr style="background:${col}10;border-top:1px solid ${col}30;border-bottom:1px solid ${col}30">
-      <td style="padding:6px 10px;font-weight:600;font-size:10px;color:${col};position:sticky;left:0;background:${col}10">${head} Total</td>
-      <td></td>
-      ${groupMonthTotals.map((v,mi)=>{
+      <td style="text-align:center;padding:4px 2px;color:var(--muted2);font-size:10px">${h.dayOfMonth}</td>
+      ${months.map((mn,mi)=>{
+        const v=getCpA(fy,h.id,mi);
+        const paid=getCpC(fy,h.id,mi);
+        const bgt=h.budget||0;
+        const col=v===0?'var(--muted)':v>=bgt?'var(--green)':'var(--yellow)';
         const bg=mi===currentMonth?'rgba(37,99,235,.06)':'transparent';
-        return `<td style="text-align:right;padding:6px 8px;font-weight:600;color:${v>0?col:'var(--muted)'};background:${bg}">${v>0?fmt(v):'—'}</td>`;
+        return `<td style="text-align:right;padding:6px 8px;color:${col};background:${bg};border-left:${mi===currentMonth?'2px solid rgba(37,99,235,.2)':'none'}">
+          ${v>0?fmt(v):'—'}${paid?' <span style="color:var(--green);font-size:9px">✓</span>':''}
+        </td>`;
       }).join('')}
-      <td style="text-align:right;padding:6px 8px;font-weight:700;color:${col}">${fmt(groupTotal)}</td>
-    </tr>
-    <tr style="height:6px"><td colspan="${12+3}"></td></tr>`;
+      <td style="text-align:right;padding:6px 8px;font-weight:600;color:${rowTotal>0?'var(--text)':'var(--muted)'}">${rowTotal>0?fmt(rowTotal):'—'}</td>
+    </tr>`;
   });
 
-  /* Grand total row */
-  html+=`<tr style="background:var(--s3);border-top:2px solid var(--border2)">
-    <td style="padding:8px 10px;font-weight:700;color:var(--text);font-size:11px;position:sticky;left:0;background:var(--s3)">Grand Total</td>
+  // Totals row
+  html+=`<tr style="background:var(--s3);border-top:1px solid var(--border2)">
+    <td style="padding:8px 10px;font-weight:600;color:var(--muted2);font-size:10px;text-transform:uppercase;position:sticky;left:0;background:var(--s3)">Monthly Total</td>
     <td></td>
-    ${monthGrandTotals.map((v,mi)=>{
-      const bg=mi===currentMonth?'rgba(37,99,235,.08)':'transparent';
-      return `<td style="text-align:right;padding:6px 8px;font-weight:700;color:${v>0?'var(--text)':'var(--muted)'};background:${bg}">${v>0?fmt(v):'—'}</td>`;
+    ${months.map((mn,mi)=>{
+      const mTotal=sorted.reduce((s,h)=>s+getCpA(fy,h.id,mi),0);
+      return `<td style="text-align:right;padding:6px 8px;font-weight:600;color:${mTotal>0?'var(--text)':'var(--muted)'};background:${mi===currentMonth?'rgba(37,99,235,.06)':'transparent'}">${mTotal>0?fmt(mTotal):'—'}</td>`;
     }).join('')}
-    <td style="text-align:right;padding:6px 8px;font-weight:800;color:var(--text)">${fmt(grandTotal)}</td>
+    <td style="text-align:right;padding:6px 8px;font-weight:700;color:var(--text)">${fmt(sorted.reduce((s,h)=>s+FY_MONTHS[fy].reduce((_,__,mm)=>_+getCpA(fy,h.id,mm),0),0))}</td>
   </tr>`;
 
   html+=`</tbody></table></div>`;
@@ -1764,9 +1665,9 @@ function cpSetFreq(id, val){
   const h=cpItems.find(h=>h.id===id); if(!h)return;
   h.freq=val; save(); renderCommitted();
 }
-function cpSetPayHead(id, val){
+function cpSetPayMethod(id, val){
   if(val==='__add__'){
-    const nm=prompt('New payout head name:');
+    const nm=prompt('New payment method name:');
     if(!nm||!nm.trim()) return;
     const trimmed=nm.trim();
     if(!CP_PAY_HEADS.includes(trimmed)){
@@ -1809,10 +1710,10 @@ function addCommitted(){
   const budget=parseFloat(prompt('Amount per occurrence (₹):')||'0')||0;
   const freqChoice=prompt('Frequency:\n1 = Monthly\n2 = Quarterly\n3 = Half-Yearly\n4 = Yearly\n5 = One-Time (this month only)\n(type 1-5):','1');
   const freq=CP_FREQ_VALS[parseInt(freqChoice||'1')-1]||'monthly';
-  const phList=CP_PAY_HEADS.map((p,i)=>`${i+1} = ${p}`).join('\n');
-  const phChoice=prompt('Payout Head:\n'+phList+'\n(type number, or type a new head name):','1');
-  const phIdx=parseInt(phChoice)-1;
-  const payHead=(phIdx>=0&&phIdx<CP_PAY_HEADS.length)?CP_PAY_HEADS[phIdx]:(phChoice&&phChoice.trim()&&isNaN(phChoice)?phChoice.trim():'Others');
+  const pmList=CP_PAY_HEADS.map((p,i)=>`${i+1} = ${p}`).join('\n');
+  const pmChoice=prompt('Payment method:\n'+pmList+'\n(type number, or type a new method name):','1');
+  const pmIdx=parseInt(pmChoice)-1;
+  const payHead=(pmIdx>=0&&pmIdx<CP_PAY_HEADS.length)?CP_PAY_HEADS[pmIdx]:(pmChoice&&pmChoice.trim()&&isNaN(pmChoice)?pmChoice.trim():'Others');
   if(!CP_PAY_HEADS.includes(payHead)){ CP_PAY_HEADS.push(payHead); SS('fp_cp_payheads',CP_PAY_HEADS); }
   const id='cp'+Date.now();
   cpItems.push({id,name,sub,dayOfMonth:Math.max(1,Math.min(31,day)),budget,freq,payHead,active:true,startMonth:currentMonth,startFY:currentFY});
@@ -1821,478 +1722,6 @@ function addCommitted(){
     cpActuals[fy][id]=new Array(12).fill(0);
   });
   save();renderCommitted();
-}
-
-
-/* ══════════════════════════════════════════════
-   STATEMENTS — keyword categorisation map
-══════════════════════════════════════════════ */
-const ST_KEYWORDS = {
-  'CC Payout':      ['credit card','cc payment','card payment','cred ','amex','hdfc cc','kotak cc','sbi card','axis cc','rbl card','onecard','icici cc'],
-  'Loans':          ['emi','loan','mortgage','hdfc ltd','bajaj fin','home loan','car loan','personal loan','nps','ppf','fd interest'],
-  'Mobile/Data':    ['airtel','jio','vi ','vodafone','bsnl','recharge','mobile','broadband','internet','tata sky','dish tv','hotstar','netflix','amazon prime','spotify','youtube'],
-  'Savings':        ['mutual fund','sip','zerodha','groww','kuvera','coin by','nse','bse','stock','shares','demat','mf ','axis mf','hdfc mf','sbi mf'],
-  'Rent':           ['rent','rental','landlord','lease','housing','maintenance society','society fee'],
-  'Fees':           ['school fee','tuition','coaching','college fee','university','examination','admission','library'],
-  'Maintenance/Electricity': ['bescom','msedcl','electricity','power bill','water bill','gas bill','bbmp','maintenance','housekeeping','plumber','electrician','painter','swiggy instamart','bigbasket','grofer','blinkit','zepto'],
-};
-
-function stAutoCategory(desc){
-  const d = (desc||'').toLowerCase();
-  for(const [head, keywords] of Object.entries(ST_KEYWORDS)){
-    if(keywords.some(k => d.includes(k))) return head;
-  }
-  return 'Others';
-}
-
-/* ══════════════════════════════════════════════
-   STATEMENTS — PDF parser
-══════════════════════════════════════════════ */
-// Configure PDF.js worker
-if(typeof pdfjsLib !== 'undefined'){
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-}
-
-let stQueuedFiles = [];
-
-function stHandleFiles(files){
-  stQueuedFiles = Array.from(files);
-  const listEl = document.getElementById('stFileItems');
-  const listWrap = document.getElementById('stFileList');
-  if(listEl){
-    listEl.innerHTML = stQueuedFiles.map((f,i)=>
-      `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--s1);border-radius:7px;margin-bottom:5px;font-size:11px;font-family:var(--fd)">
-        <span style="font-size:16px">${f.name.endsWith('.pdf')?'📄':'📊'}</span>
-        <span style="flex:1;color:var(--text)">${f.name}</span>
-        <span style="color:var(--muted)">${(f.size/1024).toFixed(0)} KB</span>
-      </div>`
-    ).join('');
-    listWrap.style.display = 'block';
-  }
-}
-
-async function stProcessFiles(){
-  if(!stQueuedFiles.length){ stLog('⚠ No files selected.'); return; }
-  const password = document.getElementById('stPassword')?.value || '';
-  const sourceType = document.getElementById('stSourceType')?.value || 'other';
-  const logEl = document.getElementById('stUploadLog');
-  if(logEl) logEl.style.display = 'block';
-
-  const fy = currentFY, m = currentMonth;
-  const monthData = stGetMonth(fy, m);
-
-  for(const file of stQueuedFiles){
-    stLog(`📄 Processing: ${file.name}…`);
-    try{
-      let txns = [];
-      if(file.name.toLowerCase().endsWith('.pdf')){
-        txns = await stParsePDF(file, password, sourceType);
-      } else {
-        txns = await stParseCSV(file, sourceType);
-      }
-      stLog(`  ✓ Found ${txns.length} transactions`);
-
-      // Add source to list if not already there
-      if(!monthData.sources.includes(file.name)) monthData.sources.push(file.name);
-      // Append txns (skip exact duplicates)
-      let added = 0;
-      txns.forEach(t=>{
-        const dup = monthData.txns.find(x=>x.date===t.date&&x.desc===t.desc&&x.amount===t.amount&&x.source===t.source);
-        if(!dup){ monthData.txns.push(t); added++; }
-      });
-      stLog(`  ✓ Added ${added} new (${txns.length-added} duplicates skipped)`);
-    } catch(e){
-      stLog(`  ✗ Error: ${e.message}`);
-    }
-  }
-
-  stSaveData();
-  stLog(`✓ Done. Switch to Review tab to categorise.`);
-  stQueuedFiles = [];
-  stSwitchTab('review');
-}
-
-async function stParsePDF(file, password, sourceType){
-  if(typeof pdfjsLib === 'undefined') throw new Error('PDF.js not loaded');
-  const arrayBuffer = await file.arrayBuffer();
-  const loadingTask = pdfjsLib.getDocument({
-    data: arrayBuffer,
-    password: password || undefined,
-  });
-  const pdf = await loadingTask.promise;
-  stLog(`  → ${pdf.numPages} pages`);
-
-  let fullText = '';
-  for(let p = 1; p <= pdf.numPages; p++){
-    const page = await pdf.getPage(p);
-    const tc = await page.getTextContent();
-    // Preserve layout by sorting items by y then x
-    const items = tc.items.sort((a,b)=> Math.abs(b.transform[5]-a.transform[5]) > 3
-      ? b.transform[5]-a.transform[5]
-      : a.transform[4]-b.transform[4]
-    );
-    let lastY = null;
-    items.forEach(item=>{
-      const y = Math.round(item.transform[5]);
-      if(lastY !== null && Math.abs(y - lastY) > 3) fullText += '\n';
-      fullText += item.str + ' ';
-      lastY = y;
-    });
-    fullText += '\n';
-  }
-
-  return stParseTextTransactions(fullText, sourceType, file.name);
-}
-
-async function stParseCSV(file, sourceType){
-  const text = await file.text();
-  return stParseTextTransactions(text, sourceType, file.name);
-}
-
-function stParseTextTransactions(text, sourceType, sourceName){
-  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length > 3);
-  const txns = [];
-
-  // Date patterns: DD/MM/YYYY, DD-MM-YYYY, DD MMM YYYY, MMM DD YYYY
-  const dateRe = /(\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{2,4}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4})/i;
-  // Amount: number with optional commas, optional Dr/Cr suffix
-  const amtRe = /(\d{1,3}(?:,\d{2,3})*(?:\.\d{1,2})?)\s*(Dr|Cr|DR|CR)?/;
-
-  lines.forEach(line=>{
-    const dateMatch = line.match(dateRe);
-    if(!dateMatch) return;
-
-    const dateStr = dateMatch[1];
-    const afterDate = line.slice(line.indexOf(dateStr) + dateStr.length).trim();
-
-    // Extract all numbers from the line
-    const amounts = [];
-    let amtLine = afterDate;
-    let am;
-    const amtGlobal = /(\d{1,3}(?:,\d{2,3})*(?:\.\d{1,2})?)/g;
-    while((am = amtGlobal.exec(afterDate)) !== null){
-      const v = parseFloat(am[1].replace(/,/g,''));
-      if(v >= 1 && v < 10000000) amounts.push({val:v, pos:am.index});
-    }
-    if(!amounts.length) return;
-
-    // Take the last amount as the transaction amount (usually debit/credit column)
-    const amount = amounts[amounts.length-1].val;
-    if(amount < 1) return;
-
-    // Description: text between date and first large number
-    let desc = afterDate.replace(/(\d{1,3}(?:,\d{2,3})*(?:\.\d{1,2})?)\s*(Dr|Cr|DR|CR)?/g,'').trim();
-    desc = desc.replace(/\s{2,}/g,' ').trim().slice(0, 80);
-    if(desc.length < 2) desc = 'Transaction';
-
-    // Determine if debit (expense) — skip credits/refunds
-    const lineUpper = line.toUpperCase();
-    const isCr = lineUpper.includes(' CR ') || lineUpper.endsWith(' CR') ||
-                 lineUpper.includes('CREDIT') || lineUpper.includes('REFUND') ||
-                 lineUpper.includes('REVERSAL');
-    if(isCr) return; // skip credits
-
-    txns.push({
-      id: 'tx_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
-      date: dateStr,
-      desc: desc,
-      amount: amount,
-      head: stAutoCategory(desc),
-      source: sourceName,
-      skipped: false,
-    });
-  });
-
-  return txns;
-}
-
-/* ══════════════════════════════════════════════
-   STATEMENTS — UI functions
-══════════════════════════════════════════════ */
-let stActiveTab = 'upload';
-
-function stSwitchTab(tab){
-  stActiveTab = tab;
-  ['upload','review','summary'].forEach(t=>{
-    const btn = document.getElementById('stTab_'+t);
-    const panel = document.getElementById('stPanel_'+t);
-    if(btn) btn.classList.toggle('st-tab-active', t===tab);
-    if(panel) panel.style.display = t===tab ? 'block' : 'none';
-  });
-  if(tab==='review') stRenderReview();
-  if(tab==='summary') stRenderSummary();
-}
-
-function stLog(msg){
-  const el = document.getElementById('stUploadLog');
-  if(!el) return;
-  el.innerHTML += `<div>${msg}</div>`;
-  el.scrollTop = el.scrollHeight;
-}
-
-function renderStatements(){
-  // Just update month bars — panels render on tab click
-  const mn = FY_MONTHS[currentFY][currentMonth];
-  const el1 = document.getElementById('vmb_month_statements');
-  const el2 = document.getElementById('vmb_fy_statements');
-  if(el1) el1.textContent = mn;
-  if(el2) el2.textContent = currentFY;
-  if(stActiveTab === 'review') stRenderReview();
-  if(stActiveTab === 'summary') stRenderSummary();
-}
-
-function stRenderReview(){
-  const fy = currentFY, m = currentMonth;
-  const monthData = stGetMonth(fy, m);
-  const txns = monthData.txns || [];
-
-  // Populate filter dropdowns
-  const headFilter = document.getElementById('stFilterHead');
-  const srcFilter = document.getElementById('stFilterSource');
-  if(headFilter){
-    const heads = [...new Set(txns.map(t=>t.head))].sort();
-    const curHead = headFilter.value;
-    headFilter.innerHTML = '<option value="">All heads</option>' +
-      heads.map(h=>`<option value="${h}" ${h===curHead?'selected':''}>${h}</option>`).join('');
-  }
-  if(srcFilter){
-    const srcs = [...new Set(txns.map(t=>t.source))].sort();
-    const curSrc = srcFilter.value;
-    srcFilter.innerHTML = '<option value="">All sources</option>' +
-      srcs.map(s=>`<option value="${s}" ${s===curSrc?'selected':''}>${s}</option>`).join('');
-  }
-
-  const filterHead = headFilter?.value || '';
-  const filterSrc  = srcFilter?.value  || '';
-
-  const filtered = txns.filter(t=>
-    (!filterHead || t.head === filterHead) &&
-    (!filterSrc  || t.source === filterSrc)
-  );
-
-  const countEl = document.getElementById('stReviewCount');
-  if(countEl){
-    const total = txns.filter(t=>!t.skipped).reduce((s,t)=>s+t.amount, 0);
-    countEl.textContent = `${filtered.length} transactions · ₹${Math.round(total).toLocaleString('en-IN')} total spend`;
-  }
-
-  const rowsEl = document.getElementById('stReviewRows');
-  if(!rowsEl) return;
-
-  if(!txns.length){
-    rowsEl.innerHTML = `<div style="padding:32px;text-align:center;color:var(--muted);font-family:var(--fd);font-size:12px">
-      No transactions for ${FY_MONTHS[fy][m]} · ${fy}.<br>Upload a statement in the Upload tab.
-    </div>`;
-    return;
-  }
-
-  // Sort by date
-  const sorted = [...filtered].sort((a,b)=> new Date(a.date) - new Date(b.date) || a.desc.localeCompare(b.desc));
-
-  const headColors = {'CC Payout':'#1d4ed8','Loans':'#dc2626','Mobile/Data':'#0891b2','Savings':'#059669',
-    'Rent':'#7c3aed','Fees':'#d97706','Maintenance/Electricity':'#65a30d','Others':'#6b7280'};
-
-  const headOpts = CP_PAY_HEADS.map(h=>
-    `<option value="${h}">${h}</option>`
-  ).join('');
-
-  let html = '';
-  sorted.forEach(t=>{
-    const col = headColors[t.head] || '#6b7280';
-    html += `<div class="st-tx-row ${t.skipped?'skipped':''}" id="strow_${t.id}">
-      <div style="color:var(--muted2);font-size:10px">${t.date}</div>
-      <div style="color:var(--text);font-size:11px;padding-right:8px">${t.desc}
-        <div style="font-size:9px;color:var(--muted)">${t.source}</div>
-      </div>
-      <div style="text-align:right;font-weight:600;color:var(--text)">₹${t.amount.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
-      <div style="padding:0 6px">
-        <select class="pay-select" onchange="stSetHead('${t.id}',this.value)"
-          style="border-color:${col}55;background:${col}12;color:${col}">
-          ${CP_PAY_HEADS.map(h=>`<option value="${h}" ${h===t.head?'selected':''}>${h}</option>`).join('')}
-          <option value="__add__">+ Add head…</option>
-        </select>
-      </div>
-      <div style="text-align:center">
-        <button onclick="stToggleSkip('${t.id}')" title="${t.skipped?'Include':'Skip/exclude'}"
-          style="background:transparent;border:1px solid var(--border2);color:${t.skipped?'var(--green)':'var(--muted)'};
-            border-radius:5px;width:26px;height:26px;cursor:pointer;font-size:12px">
-          ${t.skipped?'↩':'✕'}
-        </button>
-      </div>
-    </div>`;
-  });
-  rowsEl.innerHTML = html;
-
-  // Totals by head
-  const totalsEl = document.getElementById('stReviewTotals');
-  if(totalsEl){
-    const byHead = {};
-    txns.filter(t=>!t.skipped).forEach(t=>{
-      byHead[t.head] = (byHead[t.head]||0) + t.amount;
-    });
-    const sorted2 = Object.entries(byHead).sort((a,b)=>b[1]-a[1]);
-    totalsEl.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px">` +
-      sorted2.map(([h,v])=>{
-        const col = headColors[h]||'#6b7280';
-        return `<div style="background:${col}18;border:1px solid ${col}44;border-radius:7px;padding:6px 12px;font-family:var(--fd);font-size:10px">
-          <span style="font-weight:700;color:${col}">${h}</span>
-          <span style="color:var(--text);margin-left:6px">₹${Math.round(v).toLocaleString('en-IN')}</span>
-        </div>`;
-      }).join('') + `</div>`;
-  }
-}
-
-function stSetHead(txId, val){
-  if(val==='__add__'){
-    const nm=prompt('New payout head:');
-    if(!nm||!nm.trim()) return;
-    const trimmed=nm.trim();
-    if(!CP_PAY_HEADS.includes(trimmed)){ CP_PAY_HEADS.push(trimmed); SS('fp_cp_payheads',CP_PAY_HEADS); }
-    stSetHead(txId, trimmed); return;
-  }
-  const fy=currentFY, m=currentMonth;
-  const monthData=stGetMonth(fy,m);
-  const tx=monthData.txns.find(t=>t.id===txId);
-  if(tx){ tx.head=val; stSaveData(); stRenderReview(); }
-}
-
-function stToggleSkip(txId){
-  const fy=currentFY, m=currentMonth;
-  const monthData=stGetMonth(fy,m);
-  const tx=monthData.txns.find(t=>t.id===txId);
-  if(tx){
-    tx.skipped=!tx.skipped;
-    stSaveData();
-    // Instant DOM update
-    const row=document.getElementById('strow_'+txId);
-    if(row){
-      row.classList.toggle('skipped',tx.skipped);
-      const btn=row.querySelector('button');
-      if(btn){ btn.textContent=tx.skipped?'↩':'✕'; btn.style.color=tx.skipped?'var(--green)':'var(--muted)'; }
-    }
-    // Update totals
-    const countEl=document.getElementById('stReviewCount');
-    const monthDataFresh=stGetMonth(fy,m);
-    const total=monthDataFresh.txns.filter(t=>!t.skipped).reduce((s,t)=>s+t.amount,0);
-    if(countEl) countEl.textContent=`${monthDataFresh.txns.length} transactions · ₹${Math.round(total).toLocaleString('en-IN')} total spend`;
-  }
-}
-
-function stClearMonth(){
-  if(!confirm(`Clear all statement data for ${FY_MONTHS[currentFY][currentMonth]} · ${currentFY}?`)) return;
-  const fy=currentFY, m=currentMonth;
-  if(stData[fy]) stData[fy][m]={sources:[],txns:[]};
-  stSaveData();
-  stRenderReview();
-}
-
-/* ══════════════════════════════════════════════
-   STATEMENTS — Summary (full-year by head × month)
-══════════════════════════════════════════════ */
-function stRenderSummary(){
-  const el=document.getElementById('stSummaryTable');
-  if(!el) return;
-  const fy=currentFY;
-  const months=FY_MONTHS[fy];
-
-  // Collect all heads that appear in this FY
-  const allHeads=new Set(CP_PAY_HEADS);
-  months.forEach((_,mi)=>{
-    const md=stGetMonth(fy,mi);
-    (md.txns||[]).filter(t=>!t.skipped).forEach(t=>allHeads.add(t.head));
-  });
-
-  // Build matrix: head × month
-  const matrix={};
-  allHeads.forEach(h=>{ matrix[h]=new Array(12).fill(0); });
-  months.forEach((_,mi)=>{
-    const md=stGetMonth(fy,mi);
-    (md.txns||[]).filter(t=>!t.skipped).forEach(t=>{
-      if(!matrix[t.head]) matrix[t.head]=new Array(12).fill(0);
-      matrix[t.head][mi]+=t.amount;
-    });
-  });
-
-  // Sort heads: defined order first
-  const headOrder=['CC Payout','Loans','Rent','Savings','Fees','Mobile/Data','Maintenance/Electricity','Others'];
-  const sortedHeads=[
-    ...headOrder.filter(h=>allHeads.has(h)),
-    ...[...allHeads].filter(h=>!headOrder.includes(h))
-  ].filter(h=>matrix[h] && matrix[h].some(v=>v>0));
-
-  const headColors={'CC Payout':'#1d4ed8','Loans':'#dc2626','Mobile/Data':'#0891b2','Savings':'#059669',
-    'Rent':'#7c3aed','Fees':'#d97706','Maintenance/Electricity':'#65a30d','Others':'#6b7280'};
-
-  if(!sortedHeads.length){
-    el.innerHTML=`<div style="padding:40px;text-align:center;color:var(--muted);font-family:var(--fd);font-size:12px">
-      No statement data for ${fy} yet.<br>Upload statements and categorise them first.
-    </div>`;
-    return;
-  }
-
-  let html=`<div style="margin-bottom:12px;display:flex;align-items:center;gap:12px">
-    <div style="font-size:12px;color:var(--muted2);font-family:var(--fd)">Statement expenses by category — ${fy}</div>
-  </div>
-  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-  <table style="width:100%;border-collapse:collapse;font-size:11px;min-width:780px">
-    <thead>
-      <tr>
-        <th style="text-align:left;padding:8px 12px;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:400;border-bottom:2px solid var(--border2);position:sticky;left:0;background:var(--bg);min-width:140px">Head</th>
-        ${months.map((mn,mi)=>`<th style="text-align:right;padding:6px 8px;color:${mi===currentMonth?'var(--accent)':'var(--muted)'};font-size:9px;font-weight:${mi===currentMonth?'600':'400'};border-bottom:2px solid var(--border2);min-width:70px">${mn}</th>`).join('')}
-        <th style="text-align:right;padding:6px 10px;color:var(--muted);font-size:9px;font-weight:400;border-bottom:2px solid var(--border2)">Total</th>
-      </tr>
-    </thead>
-    <tbody>`;
-
-  const monthGrand=new Array(12).fill(0);
-
-  sortedHeads.forEach((head,idx)=>{
-    const col=headColors[head]||'#6b7280';
-    const row=matrix[head];
-    const rowTotal=row.reduce((a,b)=>a+b,0);
-    row.forEach((v,mi)=>monthGrand[mi]+=v);
-    const rowBg=idx%2===0?'var(--s1)':'var(--s2)';
-
-    html+=`<tr style="background:${rowBg};cursor:pointer" onclick="stDrillDown('${head}','${fy}')">
-      <td style="padding:8px 12px;position:sticky;left:0;background:${rowBg}">
-        <span style="background:${col}18;color:${col};font-weight:600;font-size:10px;padding:2px 8px;border-radius:4px">${head}</span>
-      </td>
-      ${row.map((v,mi)=>{
-        const bg=mi===currentMonth?'rgba(37,99,235,.06)':'transparent';
-        const border=mi===currentMonth?'border-left:2px solid rgba(37,99,235,.2)':'';
-        return `<td style="text-align:right;padding:6px 8px;color:${v>0?'var(--text)':'var(--muted)'};background:${bg};${border}">
-          ${v>0?'₹'+Math.round(v).toLocaleString('en-IN'):'—'}
-        </td>`;
-      }).join('')}
-      <td style="text-align:right;padding:6px 10px;font-weight:700;color:${col}">₹${Math.round(rowTotal).toLocaleString('en-IN')}</td>
-    </tr>`;
-  });
-
-  // Grand total row
-  const grandTotal=monthGrand.reduce((a,b)=>a+b,0);
-  html+=`<tr style="background:var(--s3);border-top:2px solid var(--border2)">
-    <td style="padding:8px 12px;font-weight:700;color:var(--text);font-size:11px;position:sticky;left:0;background:var(--s3)">Total</td>
-    ${monthGrand.map((v,mi)=>{
-      const bg=mi===currentMonth?'rgba(37,99,235,.08)':'transparent';
-      return `<td style="text-align:right;padding:6px 8px;font-weight:700;color:${v>0?'var(--text)':'var(--muted)'};background:${bg}">
-        ${v>0?'₹'+Math.round(v).toLocaleString('en-IN'):'—'}
-      </td>`;
-    }).join('')}
-    <td style="text-align:right;padding:6px 10px;font-weight:800;color:var(--text)">₹${Math.round(grandTotal).toLocaleString('en-IN')}</td>
-  </tr>`;
-
-  html+=`</tbody></table></div>
-  <div style="margin-top:10px;font-size:10px;color:var(--muted);font-family:var(--fd)">Click any row to drill into transactions for that category.</div>`;
-  el.innerHTML=html;
-}
-
-function stDrillDown(head, fy){
-  // Switch to review tab and filter by head
-  stSwitchTab('review');
-  setTimeout(()=>{
-    const hf=document.getElementById('stFilterHead');
-    if(hf){ hf.value=head; stRenderReview(); }
-  },100);
 }
 
 /* ══════════════════════════════════════════════
@@ -2736,6 +2165,355 @@ function addNWHist(){
   nwHistory.push({label,tnw,liquid:liq});
   save();renderNetworth();
 }
+
+/* ══════════════════════════════════════════════
+   STATEMENTS — state & functions
+══════════════════════════════════════════════ */
+const ST_KEYWORDS = {
+  'CC Payout':['credit card','cc payment','card payment','cred ','amex','hdfc cc','kotak cc','sbi card','axis cc','rbl','onecard'],
+  'Loans':['emi','loan','mortgage','bajaj fin','home loan','car loan','personal loan','nps','ppf'],
+  'Mobile/Data':['airtel','jio','vi ','vodafone','recharge','mobile','broadband','internet','netflix','amazon prime','spotify','hotstar'],
+  'Savings':['mutual fund','sip','zerodha','groww','kuvera','nse','bse','stock','shares','demat'],
+  'Rent':['rent','rental','landlord','lease','society fee'],
+  'Fees':['school fee','tuition','coaching','college fee','examination','admission'],
+  'Maintenance/Electricity':['bescom','msedcl','electricity','water bill','gas bill','maintenance','housekeeping','swiggy','bigbasket','blinkit','zepto','grofer'],
+};
+
+function stAutoCategory(desc){
+  const d=(desc||'').toLowerCase();
+  for(const [head,kws] of Object.entries(ST_KEYWORDS)){
+    if(kws.some(k=>d.includes(k))) return head;
+  }
+  return 'Others';
+}
+
+if(typeof pdfjsLib!=='undefined'){
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+let stData = LS('fp_st_data') || {};
+let stQueuedFiles = [];
+let stActiveTab = 'upload';
+
+function stSaveData(){
+  SS('fp_st_data',stData);
+}
+function stGetMonth(fy,m){
+  if(!stData[fy]) stData[fy]={};
+  if(!stData[fy][m]) stData[fy][m]={sources:[],txns:[]};
+  return stData[fy][m];
+}
+
+function stHandleFiles(files){
+  stQueuedFiles=Array.from(files);
+  stRenderFileList();
+}
+function stRemoveFile(i){
+  stQueuedFiles.splice(i,1);
+  stRenderFileList();
+  // Also reset the file input so it can re-select
+  const inp=document.getElementById('stFileInput');
+  if(inp) inp.value='';
+}
+function stRenderFileList(){
+  const wrap=document.getElementById('stFileList');
+  const el=document.getElementById('stFileItems');
+  if(!el) return;
+  if(!stQueuedFiles.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  el.innerHTML=stQueuedFiles.map((f,i)=>
+    `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--s1);border-radius:7px;margin-bottom:5px;font-size:11px;font-family:var(--fd)">
+      <span>${f.name.endsWith('.pdf')?'📄':'📊'}</span>
+      <span style="flex:1;color:var(--text)">${f.name}</span>
+      <span style="color:var(--muted)">${(f.size/1024).toFixed(0)} KB</span>
+      <button onclick="stRemoveFile(${i})" title="Remove"
+        style="background:var(--red-bg);border:1px solid var(--red);color:var(--red);border-radius:5px;width:22px;height:22px;cursor:pointer;font-size:13px;flex-shrink:0">×</button>
+    </div>`
+  ).join('');
+}
+
+function stLog(msg){
+  const el=document.getElementById('stUploadLog');
+  if(!el) return;
+  el.innerHTML+=`<div>${msg}</div>`;
+  el.scrollTop=el.scrollHeight;
+}
+
+async function stProcessFiles(){
+  const inp=document.getElementById('stFileInput');
+  if(inp&&inp.files.length&&!stQueuedFiles.length) stQueuedFiles=Array.from(inp.files);
+  if(!stQueuedFiles.length){ alert('No files selected. Click the upload area first.'); return; }
+  const logEl=document.getElementById('stUploadLog');
+  if(logEl){ logEl.style.display='block'; logEl.innerHTML=''; }
+  const password=(document.getElementById('stPassword')?.value||'').trim();
+  const sourceType=document.getElementById('stSourceType')?.value||'other';
+  const fy=currentFY, m=currentMonth;
+  const monthData=stGetMonth(fy,m);
+  stLog(`🗂 Parsing ${stQueuedFiles.length} file(s) for <b>${FY_MONTHS[fy][m]} · ${fy}</b>…`);
+  for(const file of stQueuedFiles){
+    stLog(`<br>📄 <b>${file.name}</b>`);
+    try{
+      const ext=file.name.split('.').pop().toLowerCase();
+      let txns=ext==='pdf' ? await stParsePDF(file,password,sourceType) : await stParseCSV(file,sourceType);
+      stLog(`&nbsp;&nbsp;✓ ${txns.length} debit transactions found`);
+      if(!monthData.sources.includes(file.name)) monthData.sources.push(file.name);
+      let added=0;
+      txns.forEach(t=>{
+        const dup=monthData.txns.find(x=>x.date===t.date&&x.desc===t.desc&&Math.abs(x.amount-t.amount)<1&&x.source===t.source);
+        if(!dup){ monthData.txns.push(t); added++; }
+      });
+      stLog(`&nbsp;&nbsp;✓ <b>${added}</b> added (${txns.length-added} duplicates skipped)`);
+    }catch(e){
+      stLog(`&nbsp;&nbsp;✗ <span style="color:var(--red)">${e.message}</span>`);
+    }
+  }
+  stSaveData();
+  stLog(`<br>✅ <b>Done.</b>`);
+  stQueuedFiles=[];
+  stRenderFileList();
+  if(inp) inp.value='';
+  setTimeout(()=>stSwitchTab('review'),700);
+}
+
+async function stParsePDF(file,password,sourceType){
+  if(typeof pdfjsLib==='undefined') throw new Error('PDF.js not loaded — check internet');
+  const buf=await file.arrayBuffer();
+  const task=pdfjsLib.getDocument({data:new Uint8Array(buf),password:password||'',verbosity:0});
+  let pdf;
+  try{ pdf=await task.promise; }
+  catch(e){
+    if(e.name==='PasswordException'){
+      throw new Error(password?'Wrong password':'PDF is password-protected — enter password above');
+    }
+    throw e;
+  }
+  stLog(`&nbsp;&nbsp;→ ${pdf.numPages} page(s)`);
+  const lines=[];
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const tc=await page.getTextContent();
+    // Group text items into rows by y-coordinate
+    const rows={};
+    tc.items.forEach(item=>{
+      const y=Math.round(item.transform[5]);
+      const keys=Object.keys(rows).map(Number);
+      const close=keys.find(k=>Math.abs(k-y)<=3);
+      const key=close!==undefined?close:y;
+      if(!rows[key]) rows[key]=[];
+      rows[key].push({x:item.transform[4],str:item.str});
+    });
+    Object.keys(rows).map(Number).sort((a,b)=>b-a).forEach(y=>{
+      const line=rows[y].sort((a,b)=>a.x-b.x).map(i=>i.str).join(' ').trim();
+      if(line.length>2) lines.push(line);
+    });
+  }
+  stLog(`&nbsp;&nbsp;→ ${lines.length} text rows extracted`);
+  return stParseLines(lines,sourceType,file.name);
+}
+
+async function stParseCSV(file,sourceType){
+  const text=await file.text();
+  return stParseLines(text.split('
+').map(l=>l.trim()).filter(l=>l.length>2),sourceType,file.name);
+}
+
+function stParseLines(lines,sourceType,sourceName){
+  const txns=[];
+  const DATE_PATS=[
+    /(\d{2}\/\d{2}\/\d{4})/,
+    /(\d{2}-\d{2}-\d{4})/,
+    /(\d{2}\/\d{2}\/\d{2})/,
+    /(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})/i,
+    /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+\d{4})/i,
+    /(\d{4}-\d{2}-\d{2})/,
+  ];
+  const SKIP_WORDS=['refund','reversal','cashback','reward',' cr ','(cr)','credited','opening bal','closing bal','total','page ','statement','brought forward'];
+  const AMT_RE=/(\d{1,3}(?:,\d{2,3})*(?:\.\d{1,2})?)/g;
+  const NOISE_WORDS=/^(date|narration|description|particulars|transaction|details|s\.no|sr\.no|value date|ref|chq)/i;
+
+  lines.forEach(line=>{
+    if(NOISE_WORDS.test(line.trim())) return;
+    if(line.length<6) return;
+    const ll=line.toLowerCase();
+    if(SKIP_WORDS.some(w=>ll.includes(w))) return;
+
+    let dateStr=null;
+    for(const pat of DATE_PATS){ const m=line.match(pat); if(m){dateStr=m[1];break;} }
+    if(!dateStr) return;
+
+    const afterDate=line.slice(line.indexOf(dateStr)+dateStr.length);
+    AMT_RE.lastIndex=0;
+    const nums=[];
+    let am;
+    while((am=AMT_RE.exec(afterDate))!==null){
+      const v=parseFloat(am[1].replace(/,/g,''));
+      if(v>=10&&v<50000000) nums.push(v);
+    }
+    if(!nums.length) return;
+
+    // Heuristic: last or second-to-last number is the amount
+    // If 3+ numbers, last is likely running balance — use second-to-last
+    let amount=nums.length>=3 ? nums[nums.length-2] : nums[nums.length-1];
+    if(!amount||amount<10) return;
+
+    // Description: non-numeric text after date
+    let desc=afterDate.replace(AMT_RE,'').replace(/\s{2,}/g,' ').replace(/[|,;:]+$/,'').replace(/dr|debit/gi,'').trim();
+    desc=desc.slice(0,80)||'Transaction';
+    if(desc.length<3) desc='Transaction '+dateStr;
+
+    txns.push({
+      id:'tx_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
+      date:dateStr, desc, amount:Math.round(amount*100)/100,
+      head:stAutoCategory(desc), source:sourceName, skipped:false,
+    });
+  });
+  return txns;
+}
+
+function stSwitchTab(tab){
+  stActiveTab=tab;
+  ['upload','review','summary'].forEach(t=>{
+    const btn=document.getElementById('stTab_'+t);
+    const panel=document.getElementById('stPanel_'+t);
+    if(btn) btn.classList.toggle('st-tab-active',t===tab);
+    if(panel) panel.style.display=t===tab?'block':'none';
+  });
+  if(tab==='review') stRenderReview();
+  if(tab==='summary') stRenderSummary();
+}
+
+function renderStatements(){
+  const mn=FY_MONTHS[currentFY][currentMonth];
+  const e1=document.getElementById('vmb_month_statements');
+  const e2=document.getElementById('vmb_fy_statements');
+  if(e1)e1.textContent=mn; if(e2)e2.textContent=currentFY;
+  if(stActiveTab==='review') stRenderReview();
+  if(stActiveTab==='summary') stRenderSummary();
+}
+
+function stRenderReview(){
+  const fy=currentFY,m=currentMonth;
+  const md=stGetMonth(fy,m);
+  const txns=md.txns||[];
+  const hf=document.getElementById('stFilterHead');
+  const sf=document.getElementById('stFilterSource');
+  if(hf){ const cur=hf.value; const heads=[...new Set(txns.map(t=>t.head))].sort();
+    hf.innerHTML='<option value="">All heads</option>'+heads.map(h=>`<option value="${h}"${h===cur?' selected':''}>${h}</option>`).join(''); }
+  if(sf){ const cur=sf.value; const srcs=[...new Set(txns.map(t=>t.source))].sort();
+    sf.innerHTML='<option value="">All sources</option>'+srcs.map(s=>`<option value="${s}"${s===cur?' selected':''}>${s}</option>`).join(''); }
+  const fh=hf?.value||'', fs=sf?.value||'';
+  const filtered=txns.filter(t=>(!fh||t.head===fh)&&(!fs||t.source===fs));
+  const countEl=document.getElementById('stReviewCount');
+  if(countEl){ const tot=txns.filter(t=>!t.skipped).reduce((s,t)=>s+t.amount,0);
+    countEl.textContent=`${txns.length} transactions · ₹${Math.round(tot).toLocaleString('en-IN')} total`; }
+  const rowsEl=document.getElementById('stReviewRows');
+  if(!rowsEl) return;
+  if(!txns.length){
+    rowsEl.innerHTML=`<div style="padding:32px;text-align:center;color:var(--muted);font-family:var(--fd);font-size:12px">No transactions for ${FY_MONTHS[fy][m]} · ${fy}.<br>Upload a statement above.</div>`;
+    document.getElementById('stReviewTotals').innerHTML=''; return;
+  }
+  const HC={'CC Payout':'#1d4ed8','Loans':'#dc2626','Mobile/Data':'#0891b2','Savings':'#059669','Rent':'#7c3aed','Fees':'#d97706','Maintenance/Electricity':'#65a30d','Others':'#6b7280'};
+  const sorted=[...filtered].sort((a,b)=>a.date.localeCompare(b.date));
+  rowsEl.innerHTML=sorted.map(t=>{
+    const col=HC[t.head]||'#6b7280';
+    const opts=CP_PAY_HEADS.map(h=>`<option value="${h}"${h===t.head?' selected':''}>${h}</option>`).join('')+'<option value="__add__">+ Add head…</option>';
+    return `<div class="st-tx-row${t.skipped?' skipped':''}" id="strow_${t.id}">
+      <div style="color:var(--muted2);font-size:10px">${t.date}</div>
+      <div><span style="color:var(--text)">${t.desc}</span><div style="font-size:9px;color:var(--muted)">${t.source}</div></div>
+      <div style="text-align:right;font-weight:600;color:var(--text)">₹${t.amount.toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+      <div style="padding:0 4px"><select class="pay-select" onchange="stSetHead('${t.id}',this.value)"
+        style="border-color:${col}55;background:${col}12;color:${col}">${opts}</select></div>
+      <div style="text-align:center"><button onclick="stToggleSkip('${t.id}')" title="${t.skipped?'Include':'Skip'}"
+        style="background:transparent;border:1px solid var(--border2);color:${t.skipped?'var(--green)':'var(--muted)'};border-radius:5px;width:26px;height:26px;cursor:pointer">${t.skipped?'↩':'✕'}</button></div>
+    </div>`;
+  }).join('');
+  // Totals chips
+  const totEl=document.getElementById('stReviewTotals');
+  if(totEl){ const byH={};
+    txns.filter(t=>!t.skipped).forEach(t=>{ byH[t.head]=(byH[t.head]||0)+t.amount; });
+    totEl.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:6px">'+
+      Object.entries(byH).sort((a,b)=>b[1]-a[1]).map(([h,v])=>{
+        const c=HC[h]||'#6b7280';
+        return `<div style="background:${c}18;border:1px solid ${c}44;border-radius:7px;padding:5px 10px;font-size:10px;font-family:var(--fd)">
+          <span style="font-weight:700;color:${c}">${h}</span> <span style="color:var(--text)">₹${Math.round(v).toLocaleString('en-IN')}</span></div>`;
+      }).join('')+'</div>'; }
+}
+
+function stSetHead(txId,val){
+  if(val==='__add__'){
+    const nm=prompt('New payout head:'); if(!nm||!nm.trim()) return;
+    const t=nm.trim(); if(!CP_PAY_HEADS.includes(t)){ CP_PAY_HEADS.push(t); SS('fp_cp_payheads',CP_PAY_HEADS); }
+    stSetHead(txId,t); return;
+  }
+  const md=stGetMonth(currentFY,currentMonth);
+  const tx=md.txns.find(t=>t.id===txId);
+  if(tx){ tx.head=val; stSaveData(); stRenderReview(); }
+}
+
+function stToggleSkip(txId){
+  const md=stGetMonth(currentFY,currentMonth);
+  const tx=md.txns.find(t=>t.id===txId);
+  if(!tx) return;
+  tx.skipped=!tx.skipped; stSaveData();
+  const row=document.getElementById('strow_'+txId);
+  if(row){ row.classList.toggle('skipped',tx.skipped);
+    const btn=row.querySelector('button');
+    if(btn){ btn.textContent=tx.skipped?'↩':'✕'; btn.style.color=tx.skipped?'var(--green)':'var(--muted)'; } }
+}
+
+function stClearMonth(){
+  if(!confirm(`Clear all statement data for ${FY_MONTHS[currentFY][currentMonth]} · ${currentFY}?`)) return;
+  if(stData[currentFY]) stData[currentFY][currentMonth]={sources:[],txns:[]};
+  stSaveData(); stRenderReview();
+}
+
+function stRenderSummary(){
+  const el=document.getElementById('stSummaryTable');
+  if(!el) return;
+  const fy=currentFY, months=FY_MONTHS[fy];
+  const allH=new Set(CP_PAY_HEADS);
+  months.forEach((_,mi)=>{ (stGetMonth(fy,mi).txns||[]).filter(t=>!t.skipped).forEach(t=>allH.add(t.head)); });
+  const matrix={}; allH.forEach(h=>{ matrix[h]=new Array(12).fill(0); });
+  months.forEach((_,mi)=>{ (stGetMonth(fy,mi).txns||[]).filter(t=>!t.skipped).forEach(t=>{ if(!matrix[t.head])matrix[t.head]=new Array(12).fill(0); matrix[t.head][mi]+=t.amount; }); });
+  const HO=['CC Payout','Loans','Rent','Savings','Fees','Mobile/Data','Maintenance/Electricity','Others'];
+  const heads=[...HO.filter(h=>allH.has(h)&&matrix[h].some(v=>v>0)),...[...allH].filter(h=>!HO.includes(h)&&matrix[h]&&matrix[h].some(v=>v>0))];
+  const HC={'CC Payout':'#1d4ed8','Loans':'#dc2626','Mobile/Data':'#0891b2','Savings':'#059669','Rent':'#7c3aed','Fees':'#d97706','Maintenance/Electricity':'#65a30d','Others':'#6b7280'};
+  if(!heads.length){ el.innerHTML=`<div style="padding:40px;text-align:center;color:var(--muted);font-family:var(--fd)">No statement data for ${fy} yet.<br>Upload statements first.</div>`; return; }
+  const mGrand=new Array(12).fill(0);
+  let html=`<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;border-collapse:collapse;font-size:11px;min-width:780px">
+    <thead><tr>
+      <th style="text-align:left;padding:8px 12px;color:var(--muted);font-size:9px;text-transform:uppercase;border-bottom:2px solid var(--border2);position:sticky;left:0;background:var(--bg);min-width:140px">Head</th>
+      ${months.map((mn,mi)=>`<th style="text-align:right;padding:6px 8px;color:${mi===currentMonth?'var(--accent)':'var(--muted)'};font-size:9px;font-weight:${mi===currentMonth?600:400};border-bottom:2px solid var(--border2);min-width:70px">${mn}</th>`).join('')}
+      <th style="text-align:right;padding:6px 10px;color:var(--muted);font-size:9px;border-bottom:2px solid var(--border2)">Total</th>
+    </tr></thead><tbody>`;
+  heads.forEach((h,i)=>{
+    const col=HC[h]||'#6b7280', row=matrix[h], rt=row.reduce((a,b)=>a+b,0);
+    row.forEach((v,mi)=>mGrand[mi]+=v);
+    html+=`<tr style="background:${i%2===0?'var(--s1)':'var(--s2)'};cursor:pointer" onclick="stDrillDown('${h}','${fy}')">
+      <td style="padding:8px 12px;position:sticky;left:0;background:${i%2===0?'var(--s1)':'var(--s2)'}">
+        <span style="background:${col}18;color:${col};font-weight:600;font-size:10px;padding:2px 8px;border-radius:4px">${h}</span></td>
+      ${row.map((v,mi)=>`<td style="text-align:right;padding:6px 8px;color:${v>0?'var(--text)':'var(--muted)'};background:${mi===currentMonth?'rgba(37,99,235,.06)':'transparent'};${mi===currentMonth?'border-left:2px solid rgba(37,99,235,.2)':''}">
+        ${v>0?'₹'+Math.round(v).toLocaleString('en-IN'):'—'}</td>`).join('')}
+      <td style="text-align:right;padding:6px 10px;font-weight:700;color:${col}">₹${Math.round(rt).toLocaleString('en-IN')}</td>
+    </tr>`;
+  });
+  const gt=mGrand.reduce((a,b)=>a+b,0);
+  html+=`<tr style="background:var(--s3);border-top:2px solid var(--border2)">
+    <td style="padding:8px 12px;font-weight:700;position:sticky;left:0;background:var(--s3)">Total</td>
+    ${mGrand.map((v,mi)=>`<td style="text-align:right;padding:6px 8px;font-weight:700;color:${v>0?'var(--text)':'var(--muted)'};background:${mi===currentMonth?'rgba(37,99,235,.08)':'transparent'}">
+      ${v>0?'₹'+Math.round(v).toLocaleString('en-IN'):'—'}</td>`).join('')}
+    <td style="text-align:right;padding:6px 10px;font-weight:800">₹${Math.round(gt).toLocaleString('en-IN')}</td>
+  </tr></tbody></table></div>
+  <div style="margin-top:8px;font-size:10px;color:var(--muted);font-family:var(--fd)">Click any row to drill into transactions.</div>`;
+  el.innerHTML=html;
+}
+
+function stDrillDown(head,fy){
+  stSwitchTab('review');
+  setTimeout(()=>{ const hf=document.getElementById('stFilterHead'); if(hf){hf.value=head;stRenderReview();} },100);
+}
+
+
 </script>
 </body>
 </html>
