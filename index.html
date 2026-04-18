@@ -271,11 +271,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
   <div class="mobile-drawer-panel">
     <div style="padding:4px 16px 8px;font-size:9px;color:#4a5268;text-transform:uppercase;letter-spacing:.1em">Views</div>
     <div class="nav-item active" id="mdNav_dashboard" onclick="mobileNav('dashboard')"><div class="nav-dot"></div>Dashboard</div>
-    <div class="nav-item" id="mdNav_expenses" onclick="mobileNav('expenses')"><div class="nav-dot"></div>Expenses</div>
-    <div class="nav-item" id="mdNav_expbreakdown" onclick="mobileNav('expbreakdown')"><div class="nav-dot" style="background:var(--orange)"></div>Exp Breakdown</div>
+    <div class="nav-item" id="mdNav_committed" onclick="mobileNav('committed')"><div class="nav-dot" style="background:#f59e0b"></div>Committed Payouts</div>Exp Breakdown</div>
     <div class="nav-item" id="mdNav_income" onclick="mobileNav('income')"><div class="nav-dot"></div>Income</div>
     <div class="nav-item" id="mdNav_savings" onclick="mobileNav('savings')"><div class="nav-dot"></div>Savings</div>
-    <div class="nav-item" id="mdNav_committed" onclick="mobileNav('committed')"><div class="nav-dot" style="background:#f59e0b"></div>Committed Payouts</div>
     <div class="nav-item" id="mdNav_networth" onclick="mobileNav('networth')"><div class="nav-dot" style="background:#60a5fa"></div>Net Worth</div>
     <div style="padding:10px 16px 4px;font-size:9px;color:#4a5268;text-transform:uppercase;letter-spacing:.1em">Financial Year</div>
     <div class="mobile-fy-row" id="mobileFyBtns"></div>
@@ -305,11 +303,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
   </div>
   <div class="nav-sec-lbl">Views</div>
   <div class="nav-item active" onclick="showView('dashboard',this)"><div class="nav-dot"></div>Dashboard</div>
-  <div class="nav-item" onclick="showView('expenses',this)"><div class="nav-dot"></div>Expenses</div>
-  <div class="nav-item" onclick="showView('expbreakdown',this)"><div class="nav-dot" style="background:var(--orange)"></div>Exp Breakdown</div>
+  <div class="nav-item" onclick="showView('committed',this)"><div class="nav-dot" style="background:#f59e0b"></div>Committed Payouts</div>Exp Breakdown</div>
   <div class="nav-item" onclick="showView('income',this)"><div class="nav-dot"></div>Income</div>
   <div class="nav-item" onclick="showView('savings',this)"><div class="nav-dot"></div>Savings</div>
-  <div class="nav-item" onclick="showView('committed',this)"><div class="nav-dot" style="background:#f59e0b"></div>Committed Payouts</div>
   <div class="nav-item" onclick="showView('networth',this)"><div class="nav-dot" style="background:#60a5fa"></div>Net Worth</div>
   <div class="nav-sec-lbl">Status</div>
   <div class="nav-item" style="cursor:default"><div class="nav-dot" style="background:#d4f54e"></div><span id="sideComp">—</span></div>
@@ -387,40 +383,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
     </div>
     <div class="tbl-head"><div>Head</div><div style="text-align:right">Monthly Budget</div><div style="text-align:right">This Month · YTD</div><div style="text-align:right">Annual Remaining</div><div style="text-align:right">YTD Used %</div><div></div></div>
     <div id="eRows"></div>
-  </div>
-
-  <!-- EXPENSE BREAKDOWN -->
-  <div class="view" id="view-expbreakdown">
-    <div class="ph">
-      <div><div class="pt">Expense Breakdown <span id="ebdml"></span></div><div class="ps">Category-level spend · Payment method · Budget vs YTD</div></div>
-      <button class="add-head-btn" onclick="addExpBreakHead()">+ Add category</button>
-    </div>
-    <div class="view-month-bar">
-      <button class="vmb-btn" onclick="changeMonth(-1)">‹</button>
-      <div style="flex:1;text-align:center">
-        <div class="vmb-month" id="vmb_month_expbreakdown"></div>
-        <div class="vmb-fy" id="vmb_fy_expbreakdown"></div>
-      </div>
-      <button class="vmb-btn" onclick="goToToday()" class="vmb-today" title="Jump to current month">Today</button>
-      <button class="vmb-btn" onclick="changeMonth(1)">›</button>
-    </div>
-
-    <div class="tracker-header">
-      <div class="comp-row" style="flex:1;margin-bottom:0">
-        <div class="comp-bar-w"><div class="comp-bar" id="ebdCompBar"></div></div>
-        <div class="comp-txt" id="ebdCompTxt"></div>
-      </div>
-    </div>
-    <div class="tbl-head" style="grid-template-columns:1fr 110px 110px 100px 80px 130px 30px">
-      <div>Category</div>
-      <div style="text-align:right">Monthly Budget</div>
-      <div style="text-align:right">This Month · YTD</div>
-      <div style="text-align:right">Annual Remaining</div>
-      <div style="text-align:right">YTD Used %</div>
-      <div style="text-align:center">Payout Head</div>
-      <div></div>
-    </div>
-    <div id="ebdRows"></div>
   </div>
 
   <!-- INCOME -->
@@ -544,10 +506,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
       <div class="nw-hist-row" id="nwHistory"></div>
     </div>
     <div id="nwAssets"></div>
-    <div class="card" style="margin-top:14px">
-      <div class="ct">SIP / Investment Schedule</div>
-      <div id="sipTable"></div>
-    </div>
+
   </div>
 </main>
 </div>
@@ -986,7 +945,7 @@ function mobileNav(id){
   closeDrawer();
   const el=document.querySelector('.nav-item[onclick="showView(\''+id+'\',this)"]');
   showView(id,el);
-  ['dashboard','expenses','expbreakdown','income','savings','committed','networth'].forEach(v=>{
+  ['dashboard','committed','income','savings','networth'].forEach(v=>{
     const m=document.getElementById('mdNav_'+v);
     if(m) m.classList.toggle('active',v===id);
   });
@@ -1142,8 +1101,7 @@ function render(){
   document.querySelectorAll('[id^="vmb_month_"]').forEach(el=>el.textContent=mn);
   document.querySelectorAll('[id^="vmb_fy_"]').forEach(el=>el.textContent=currentFY);
   if(activeView==='dashboard')renderDash();
-  else if(activeView==='expenses')renderTracker('expenses');
-  else if(activeView==='expbreakdown')renderExpBreakdown();
+  else if(activeView==='committed')renderCommitted();
   else if(activeView==='income')renderTracker('income');
   else if(activeView==='savings')renderTracker('savings');
   else if(activeView==='committed')renderCommitted();
@@ -1157,9 +1115,11 @@ function renderDash(){
   const fy=currentFY,m=currentMonth,months=FY_MONTHS[fy];
   document.getElementById('dml').innerHTML=`<span style="color:var(--accent)">${months[m]} · ${fy}</span>`;
   document.getElementById('ebml').textContent=months[m];
-  const {e,i,s}=mTotals(fy,m);
+  const {e:_e,i,s}=mTotals(fy,m);
+  /* Use committed payout total as the expense figure on dashboard */
+  const e=cpItems.filter(h=>h.active!==false).reduce((sum,h)=>sum+getCpA(fy,h.id,m),0)||_e;
   const {done,total}=comp(fy,m);
-  const eB=heads.expenses.reduce((x,h)=>x+getB(fy,'expenses',h.id),0);
+  const eB=cpItems.filter(h=>h.active!==false).reduce((x,h)=>x+(h.budget||0),0)||heads.expenses.reduce((x,h)=>x+getB(fy,'expenses',h.id),0);
   const iB=heads.income.reduce((x,h)=>x+getB(fy,'income',h.id),0);
   const sB=heads.savings.reduce((x,h)=>x+getB(fy,'savings',h.id),0);
   const net=i-e-s;
@@ -1168,7 +1128,7 @@ function renderDash(){
   const iD=i-iB,eD=eB-e;
   document.getElementById('kpiGrid').innerHTML=`
     <div class="kpi" style="--kc:var(--green)"><div class="kpi-l">Income Received</div><div class="kpi-v" style="color:var(--green)">${fmt(i)}</div><div class="kpi-s">Budget: ${fmt(iB)}</div><div class="badge ${iD>=0?'b-ok':'b-ov'}">${iD>=0?'▲ '+fmt(iD)+' surplus':'▼ '+fmt(-iD)+' short'}</div></div>
-    <div class="kpi" style="--kc:var(--red)"><div class="kpi-l">Expenses Logged</div><div class="kpi-v" style="color:var(--red)">${fmt(e)}</div><div class="kpi-s">Budget: ${fmt(eB)}</div><div class="badge ${eD>=0?'b-ok':'b-ov'}">${eD>=0?'✓ '+fmt(eD)+' under':'▲ '+fmt(-eD)+' over'}</div></div>
+    <div class="kpi" style="--kc:var(--red);cursor:pointer" onclick="showView('committed',null)"><div class="kpi-l">Committed Payouts</div><div class="kpi-v" style="color:var(--red)">${fmt(e)}</div><div class="kpi-s">Budget: ${fmt(eB)}</div><div class="badge ${eD>=0?'b-ok':'b-ov'}">${eD>=0?'✓ '+fmt(eD)+' under':'▲ '+fmt(-eD)+' over'}</div></div>
     <div class="kpi" style="--kc:var(--blue)"><div class="kpi-l">Savings Invested</div><div class="kpi-v" style="color:var(--blue)">${fmt(s)}</div><div class="kpi-s">Target: ${fmt(sB)}</div><div class="badge b-ne">${sB>0?fmtP(s/sB*100):'—'} of target</div></div>
     <div class="kpi" style="--kc:${net>=0?'var(--green)':'var(--red)'}"><div class="kpi-l">Net Balance</div><div class="kpi-v" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmt(net)}</div><div class="kpi-s">${fy} · ${months[m]}</div><div class="badge ${done>=total&&total>0?'b-ok':'b-ne'}">${done}/${total} done</div></div>`;
   renderCF(fy);renderWB(fy);renderEB(fy,m);renderDonut(fy);renderFYTrend();
@@ -1218,9 +1178,20 @@ function renderWB(fy){
 
 function renderEB(fy,m){
   const el=document.getElementById('ebars');if(!el)return;
-  const items=heads.expenses.map((h,i)=>({name:h.name,val:getA(fy,'expenses',h.id,m),color:EXP_COLORS[i%EXP_COLORS.length]})).filter(x=>x.val>0).sort((a,b)=>b.val-a.val).slice(0,8);
+  /* Show committed payout totals by head for the month */
+  const headColors={'CC Payout':'#1d4ed8','Loans':'#dc2626','Mobile/Data':'#0891b2','Savings':'#059669',
+    'Rent':'#7c3aed','Fees':'#d97706','Maintenance/Electricity':'#65a30d','Others':'#6b7280'};
+  const byHead={};
+  cpItems.filter(h=>h.active!==false).forEach(h=>{
+    const head=h.payHead||'Others';
+    byHead[head]=(byHead[head]||0)+getCpA(fy,h.id,m);
+  });
+  const items=Object.entries(byHead)
+    .filter(([,v])=>v>0)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([name,val])=>({name,val,color:headColors[name]||'#6b7280'}));
   const maxV=items.length?items[0].val:1;
-  el.innerHTML=items.map(it=>`<div class="bi"><div class="bn">${it.name}</div><div class="bt"><div class="bf" style="width:${(it.val/maxV*100).toFixed(1)}%;background:${it.color}"></div></div><div class="bv">${fmt(it.val)}</div></div>`).join('')||'<div style="color:var(--muted);font-size:11px">No data logged yet</div>';
+  el.innerHTML=items.map(it=>`<div class="bi"><div class="bn">${it.name}</div><div class="bt"><div class="bf" style="width:${(it.val/maxV*100).toFixed(1)}%;background:${it.color}"></div></div><div class="bv">${fmt(it.val)}</div></div>`).join('')||'<div style="color:var(--muted);font-size:11px">No committed payouts this month</div>';
 }
 
 function renderDonut(fy){
@@ -2073,27 +2044,8 @@ function renderNetworth(){
       <div></div>
     </div>`;
   }
-
-  renderSIP();
 }
 
-function renderSIP(){
-  const el=document.getElementById('sipTable');if(!el)return;
-  const data=[
-    {name:'MF – PAYTM',platform:'PAYTM',bank:'HDFC',sip:20000,swp:25000,corpus:200000},
-    {name:'STK – PAYTM',platform:'PAYTM',bank:'HDFC',sip:10000,swp:null,corpus:null},
-    {name:'SUKANYA',platform:'HDFC',bank:'HDFC',sip:12500,swp:null,corpus:null},
-    {name:'GOLD – PAYTM',platform:'PAYTM',bank:'HDFC',sip:7500,swp:null,corpus:null},
-    {name:'STK – ICICI A',platform:'ICICI A',bank:'ICICI A',sip:15000,swp:10000,corpus:80000},
-    {name:'NPS – ICICI A',platform:'ICICI A',bank:'ICICI A',sip:5000,swp:null,corpus:null},
-    {name:'MF – ICICI S',platform:'ICICI S',bank:'ICICI S',sip:5000,swp:null,corpus:120000},
-    {name:'STK – ICICI S',platform:'ICICI S',bank:'ICICI S',sip:10000,swp:null,corpus:null},
-  ];
-  const totalSIP=data.reduce((s,r)=>s+r.sip,0);
-  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 100px 100px 100px 100px 100px;gap:8px;padding:5px 12px 8px;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border2)"><div>Instrument</div><div style="text-align:right">Platform</div><div style="text-align:right">Bank</div><div style="text-align:right">SIP (₹)</div><div style="text-align:right">SWP↑ (₹)</div><div style="text-align:right">Corpus (₹)</div></div>`
-  +data.map(r=>`<div style="display:grid;grid-template-columns:1fr 100px 100px 100px 100px 100px;gap:8px;align-items:center;padding:8px 12px;border-radius:7px;border:1px solid var(--border);margin-bottom:4px;background:var(--s1)"><div style="font-size:12px;font-weight:500">${r.name}</div><div style="text-align:right;font-size:11px;color:var(--muted2)">${r.platform}</div><div style="text-align:right;font-size:11px;color:var(--muted2)">${r.bank}</div><div style="text-align:right;font-size:12px;color:var(--accent)">${fmt(r.sip)}</div><div style="text-align:right;font-size:12px;color:var(--green)">${r.swp?fmt(r.swp):'—'}</div><div style="text-align:right;font-size:12px;color:#7c3aed">${r.corpus?fmt(r.corpus):'—'}</div></div>`).join('')
-  +`<div style="display:grid;grid-template-columns:1fr 100px 100px 100px 100px 100px;gap:8px;padding:9px 14px;background:var(--text);border-radius:8px;margin-top:6px"><div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase">Total Monthly SIP</div><div></div><div></div><div style="text-align:right;font-size:13px;font-weight:700;color:#fff">${fmt(totalSIP)}</div><div></div><div></div></div>`;
-}
 
 function nwVal(si,ai,f,v){nwSecs[si].assets[ai][f]=parseFloat(v)||0;save();renderNetworth();}
 function nwLbl(si,ai,f,v){nwSecs[si].assets[ai][f]=v;save();}
