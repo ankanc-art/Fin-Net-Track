@@ -249,7 +249,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
 <body>
 
 <!-- SIGN-IN OVERLAY -->
-<div id="authOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:#f0f2f7;align-items:center;justify-content:center">
+<div id="authOverlay" style="display:flex;position:fixed;inset:0;z-index:9000;background:#f0f2f7;align-items:center;justify-content:center">
   <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:40px 36px;max-width:360px;width:90%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)">
     <div style="font-family:Syne,sans-serif;font-size:24px;font-weight:800;color:#1a1f2e;margin-bottom:6px">Financial <span style="color:#2563eb">Plan</span></div>
     <div style="font-size:11px;color:#8a92a6;letter-spacing:.06em;text-transform:uppercase;margin-bottom:28px">FY 2025–28 · Fin-Net-Track</div>
@@ -980,8 +980,14 @@ function syncFromCloud(){
 
 /* Auth functions */
 function signInGoogle(){
-  fbAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
-    .catch(err=>alert('Sign-in failed: '+err.message));
+  const provider = new firebase.auth.GoogleAuthProvider();
+  /* Use redirect — more reliable on GitHub Pages than popup */
+  fbAuth.signInWithRedirect(provider)
+    .catch(err=>{
+      /* Fallback to popup if redirect fails */
+      fbAuth.signInWithPopup(provider)
+        .catch(err2=>alert('Sign-in failed: '+err2.message));
+    });
 }
 function skipAuth(){
   document.getElementById('authOverlay').style.display='none';
@@ -1005,6 +1011,19 @@ function _showUserChip(user){
 
 /* Auth listener — fires once on every page load */
 let _synced=false;
+/* Handle redirect result when page returns from Google auth */
+fbAuth.getRedirectResult()
+  .then(result=>{
+    if(result && result.user){
+      /* Redirect sign-in succeeded — onAuthStateChanged will fire */
+    }
+  })
+  .catch(err=>{
+    if(err.code !== 'auth/no-auth-event'){
+      alert('Sign-in error: '+err.message);
+    }
+  });
+
 /* Auth listener — only for sign-in/sync, never blocks the UI */
 let _synced = false;
 fbAuth.onAuthStateChanged(user=>{
@@ -1013,8 +1032,10 @@ fbAuth.onAuthStateChanged(user=>{
     document.getElementById('authOverlay').style.display='none';
     _showUserChip(user);
     if(!_synced){ _synced=true; syncFromCloud(); }
+  } else {
+    /* Show sign-in overlay — app is already rendered behind it */
+    document.getElementById('authOverlay').style.display='flex';
   }
-  /* If not signed in, overlay stays visible — app already rendered behind it */
 });
 
 function exportData(){
