@@ -1677,17 +1677,16 @@ function renderVitals(fy,m){
   const dwEl=document.getElementById('dueWeekStrip');
   if(dwEl){
     const today=new Date(); const dom=today.getDate();
-    /* Balance still due this month: budget of due-this-month unpaid items */
-    let dueTotal=0, paidTotal=0;
+    /* "This month" = sum of actuals (matches Committed tab subtotal)
+       "Paid" = actuals of items marked paid ✓
+       Balance to be paid = This month − Paid */
+    let thisMonthTotal=0, paidTotal=0;
     cpItems.filter(h=>h.active!==false).forEach(h=>{
-      const freq=h.freq||'monthly';
-      const dueMonths=CP_FREQ_MONTHS[freq]||CP_FREQ_MONTHS.monthly;
-      const isDue=freq==='once'?(h.startFY===fy&&h.startMonth===m):dueMonths.includes(m);
-      if(isDue){
-        if(getCpC(fy,h.id,m)) paidTotal+=(getCpA(fy,h.id,m)||h.budget||0);
-        else dueTotal+=(h.budget||0);
-      }
+      const v=getCpA(fy,h.id,m);
+      thisMonthTotal+=v;
+      if(getCpC(fy,h.id,m)) paidTotal+=v;
     });
+    const dueTotal=Math.max(0, thisMonthTotal-paidTotal);
     const upcoming=cpItems.filter(h=>h.active!==false)
       .filter(h=>{
         const freq=h.freq||'monthly';
@@ -1698,11 +1697,13 @@ function renderVitals(fy,m){
       .sort((a,b)=>a.dayOfMonth-b.dayOfMonth);
     const balanceBanner = dueTotal>0
       ? `<div style="background:linear-gradient(90deg,rgba(220,38,38,.07),transparent);border:1px solid rgba(220,38,38,.22);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:var(--fd)">
-          <span style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em">Balance due this month</span>
+          <span style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em">Balance to be paid this month</span>
           <span style="font-size:17px;font-weight:800;color:var(--red)">${fmt(dueTotal)}</span>
-          <span style="font-size:10px;color:var(--muted)">· Paid so far: <b style="color:var(--green)">${fmt(paidTotal)}</b></span>
+          <span style="font-size:10px;color:var(--muted)">· This month: <b style="color:var(--text)">${fmt(thisMonthTotal)}</b> · Paid: <b style="color:var(--green)">${fmt(paidTotal)}</b></span>
         </div>`
-      : `<div style="background:linear-gradient(90deg,rgba(5,150,105,.07),transparent);border:1px solid rgba(5,150,105,.22);border-radius:10px;padding:8px 14px;margin-bottom:10px;font-family:var(--fd);font-size:11px;color:var(--green)">✓ All committed payouts for this month are paid — ${fmt(paidTotal)} settled</div>`;
+      : thisMonthTotal>0
+        ? `<div style="background:linear-gradient(90deg,rgba(5,150,105,.07),transparent);border:1px solid rgba(5,150,105,.22);border-radius:10px;padding:8px 14px;margin-bottom:10px;font-family:var(--fd);font-size:11px;color:var(--green)">✓ All committed payouts for this month are paid — ${fmt(paidTotal)} settled</div>`
+        : '';
     const weekStrip = upcoming.length
       ? `<div style="background:linear-gradient(90deg,rgba(245,158,11,.08),transparent);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <span style="font-size:10px;font-weight:700;color:#d97706;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap">⏰ Due next 7 days</span>
