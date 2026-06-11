@@ -275,6 +275,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
     <div class="nav-item" id="mdNav_committed" onclick="mobileNav('committed')"><div class="nav-dot" style="background:#f59e0b"></div>Committed Payouts</div>
     <div class="nav-item" id="mdNav_income" onclick="mobileNav('income')"><div class="nav-dot"></div>Income</div>
     <div class="nav-item" id="mdNav_savings" onclick="mobileNav('savings')"><div class="nav-dot"></div>Savings</div>
+    <div class="nav-item" id="mdNav_plan" onclick="mobileNav('plan')"><div class="nav-dot" style="background:#a855f7"></div>Plan &amp; Goals</div>
     <div class="nav-item" id="mdNav_networth" onclick="mobileNav('networth')"><div class="nav-dot" style="background:#60a5fa"></div>Net Worth</div>
     <div style="padding:10px 16px 4px;font-size:9px;color:#4a5268;text-transform:uppercase;letter-spacing:.1em">Financial Year</div>
     <div class="mobile-fy-row" id="mobileFyBtns"></div>
@@ -307,6 +308,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
   <div class="nav-item" onclick="showView('committed',this)"><div class="nav-dot" style="background:#f59e0b"></div>Committed Payouts</div>
   <div class="nav-item" onclick="showView('income',this)"><div class="nav-dot"></div>Income</div>
   <div class="nav-item" onclick="showView('savings',this)"><div class="nav-dot"></div>Savings</div>
+  <div class="nav-item" onclick="showView('plan',this)"><div class="nav-dot" style="background:#a855f7"></div>Plan &amp; Goals</div>
   <div class="nav-item" onclick="showView('networth',this)"><div class="nav-dot" style="background:#60a5fa"></div>Net Worth</div>
   <div class="nav-sec-lbl">Status</div>
   <div class="nav-item" style="cursor:default"><div class="nav-dot" style="background:#d4f54e"></div><span id="sideComp">—</span></div>
@@ -342,9 +344,18 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
   <div class="view active" id="view-dashboard">
     <div class="ph">
       <div><div class="pt">Overview <span id="dml"></span></div><div class="ps">Cash flow · Wealth · Multi-year</div></div>
-      <div id="dcomp" style="text-align:right"></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="showAnnualReport()" style="background:var(--s2);border:1px solid var(--border2);color:var(--muted2);border-radius:8px;padding:6px 14px;font-size:10px;cursor:pointer;font-family:var(--fd);white-space:nowrap">📋 FY Report</button>
+        <div id="dcomp" style="text-align:right"></div>
+      </div>
     </div>
+    <div id="dueWeekStrip"></div>
     <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="row2" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:14px" id="vitalsRow">
+      <div class="card"><div class="ct">Savings Rate</div><div id="savingsRateCard"></div></div>
+      <div class="card"><div class="ct">Emergency Fund</div><div id="emergencyCard"></div></div>
+      <div class="card"><div class="ct">Debt Health</div><div id="debtCard"></div></div>
+    </div>
     <div class="row2" style="grid-template-columns:2fr 1fr;margin-bottom:14px">
       <div class="card"><div class="ct">Monthly Cash Flow</div><svg id="cfSvg" style="width:100%;height:168px"></svg></div>
       <div class="card"><div class="ct">Net Wealth (Monthly)</div><div class="wb-row" id="wbars"></div></div>
@@ -485,11 +496,63 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
     <div id="cpHistory" style="margin-top:20px"></div>
   </div>
 
+
+  <!-- PLAN & GOALS -->
+  <div class="view" id="view-plan">
+    <div class="ph">
+      <div><div class="pt">Plan <span>&amp; Goals</span></div>
+      <div class="ps">Goals · Retirement · Protection · Tax · What-if</div></div>
+      <button class="add-head-btn" onclick="addGoal()">+ Add goal</button>
+    </div>
+
+    <!-- Retirement readiness -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="ct">Retirement Readiness</div>
+      <div id="retireCard"></div>
+    </div>
+
+    <!-- Goals list -->
+    <div class="card" style="margin-bottom:14px">
+      <div class="ct">Financial Goals</div>
+      <div id="goalsList"></div>
+    </div>
+
+    <div class="row2" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
+      <!-- Insurance -->
+      <div class="card">
+        <div class="ct">Protection Check</div>
+        <div id="insuranceCard"></div>
+      </div>
+      <!-- Tax -->
+      <div class="card">
+        <div class="ct">Tax Savers — <span id="taxFyLbl"></span></div>
+        <div id="taxCard"></div>
+      </div>
+    </div>
+
+    <!-- What-if simulator -->
+    <div class="card">
+      <div class="ct">What-If Simulator (5-year net worth impact)</div>
+      <div id="whatIfCard"></div>
+    </div>
+  </div>
+
   <!-- NET WORTH -->
   <div class="view" id="view-networth">
     <div class="ph">
       <div><div class="pt">Net Worth <span style="color:#2563eb">Tracker</span></div><div class="ps">All asset classes · Fully editable · Historical trend</div></div>
       <button class="add-btn" onclick="addNWAsset()">+ Add asset</button>
+    </div>
+    
+    <div class="row2" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
+      <div class="card">
+        <div class="ct">Asset Allocation <button onclick="editAllocation()" style="float:right;background:var(--s2);border:1px solid var(--border2);color:var(--muted2);border-radius:5px;padding:2px 8px;font-size:9px;cursor:pointer;font-family:var(--fd)">⚙ Targets</button></div>
+        <div id="allocCard"></div>
+      </div>
+      <div class="card">
+        <div class="ct">Net Worth Velocity</div>
+        <div id="velocityCard"></div>
+      </div>
     </div>
     <div class="view-month-bar">
       <button class="vmb-btn" onclick="changeMonth(-1)">‹</button>
@@ -776,7 +839,7 @@ function _payload(){
   return {
     heads,budgets,actuals,checks,nwSecs,nwHistory,
     ebdHeads,ebdActuals,ebdChecks,
-    cpItems,cpActuals,cpChecks,
+    cpItems,cpActuals,cpChecks,finSettings,goals,
     _ts:Date.now()
   };
 }
@@ -787,6 +850,7 @@ function save(){
   SS(KEYS.checks,checks); SS(KEYS.nw,nwSecs); SS(KEYS.nwh,nwHistory);
   SS(KEYS.ebdHeads,ebdHeads); SS(KEYS.ebdActuals,ebdActuals); SS(KEYS.ebdChecks,ebdChecks);
   SS('fp_cp_items',cpItems); SS('fp_cp_actuals',cpActuals); SS('fp_cp_checks',cpChecks);
+  SS('fp_fin_settings',finSettings); SS('fp_goals',goals);
   SS('fp_lastsaved',new Date().toISOString());
   if(fbUser){
     fbDb.ref(DB_ROOT+'/'+fbUser.uid).set(_payload())
@@ -905,6 +969,8 @@ function importData(){
         if(d.cpItems)   cpItems=d.cpItems;
         if(d.cpActuals) cpActuals=d.cpActuals;
         if(d.cpChecks)  cpChecks=d.cpChecks;
+        if(d.finSettings) finSettings=d.finSettings;
+        if(d.goals)      goals=d.goals;
         FYS.forEach(fy=>{
           if(!budgets[fy])budgets[fy]=JSON.parse(JSON.stringify(DEF_BUDGETS));
           if(!actuals[fy])actuals[fy]={expenses:{},income:{},savings:{}};
@@ -946,7 +1012,7 @@ function mobileNav(id){
   closeDrawer();
   const el=document.querySelector('.nav-item[onclick="showView(\''+id+'\',this)"]');
   showView(id,el);
-  ['dashboard','committed','income','savings','networth'].forEach(v=>{
+  ['dashboard','committed','income','savings','plan','networth'].forEach(v=>{
     const m=document.getElementById('mdNav_'+v);
     if(m) m.classList.toggle('active',v===id);
   });
@@ -1012,6 +1078,62 @@ function setCpA(fy,id,m,v){
 }
 function getCpC(fy,id,m){ return !!(cpChecks[fy+'_'+id+'_'+m]); }
 function togCpC(fy,id,m){ const k=fy+'_'+id+'_'+m; cpChecks[k]=!cpChecks[k]; save(); }
+
+
+/* ══ Financial settings (editable) ══ */
+let finSettings = LS('fp_fin_settings') || {
+  monthlyIncome: 0,          /* auto-derived from income tracker if 0 */
+  loanOutstanding: 0,        /* House loan principal outstanding */
+  loanRate: 8.5,             /* annual % */
+  loanEMI: 81000,
+  termCover: 0,              /* life insurance cover ₹ */
+  healthCover: 0,            /* health insurance cover ₹ */
+  retirementAge: 60,
+  currentAge: 47,
+  targetAllocation: {Equity:50, Debt:25, 'Real Estate':15, Gold:5, Cash:5},
+};
+function saveFinSettings(){ SS('fp_fin_settings', finSettings); }
+function editFinSettings(){
+  const inc=parseFloat(prompt('Monthly take-home income (₹):', finSettings.monthlyIncome||'')||finSettings.monthlyIncome)||0;
+  const out=parseFloat(prompt('Home loan outstanding principal (₹):', finSettings.loanOutstanding||'')||finSettings.loanOutstanding)||0;
+  const rate=parseFloat(prompt('Loan interest rate (% p.a.):', finSettings.loanRate)||finSettings.loanRate)||8.5;
+  const emi=parseFloat(prompt('Monthly EMI (₹):', finSettings.loanEMI)||finSettings.loanEMI)||0;
+  const tc=parseFloat(prompt('Term life cover (₹):', finSettings.termCover||'')||finSettings.termCover)||0;
+  const hc=parseFloat(prompt('Health insurance cover (₹):', finSettings.healthCover||'')||finSettings.healthCover)||0;
+  const age=parseInt(prompt('Your current age:', finSettings.currentAge)||finSettings.currentAge)||47;
+  const rage=parseInt(prompt('Planned retirement age:', finSettings.retirementAge)||finSettings.retirementAge)||60;
+  finSettings={...finSettings, monthlyIncome:inc, loanOutstanding:out, loanRate:rate, loanEMI:emi, termCover:tc, healthCover:hc, currentAge:age, retirementAge:rage};
+  saveFinSettings(); render();
+  showToast('✓ Settings updated');
+}
+
+/* Derived helpers */
+function cpMonthTotal(fy,m){
+  return cpItems.filter(h=>h.active!==false).reduce((s,h)=>s+getCpA(fy,h.id,m),0);
+}
+function incomeMonthTotal(fy,m){
+  let s=0; heads.income.forEach(h=>s+=getA(fy,'income',h.id,m)); return s;
+}
+function avgMonthlyPayout(fy){
+  let tot=0,n=0;
+  for(let mm=0;mm<12;mm++){ const v=cpMonthTotal(fy,mm); if(v>0){tot+=v;n++;} }
+  return n?tot/n:0;
+}
+function liquidNetWorth(){
+  /* Sum NW sections marked liquid-ish: anything except real estate/retirement keywords */
+  let liq=0;
+  (nwSecs||[]).forEach(sec=>{
+    const nm=(sec.name||'').toLowerCase();
+    const isIlliquid=/real estate|property|house|flat|land|epf|ppf|nps|sukanya|retir/i.test(nm);
+    (sec.items||[]).forEach(it=>{ if(!isIlliquid) liq+=(parseFloat(it.value)||0); });
+  });
+  return liq;
+}
+function totalNetWorth(){
+  let t=0;
+  (nwSecs||[]).forEach(sec=>(sec.items||[]).forEach(it=>{ t+=(parseFloat(it.value)||0); }));
+  return t;
+}
 
 /* ── accessors ── */
 function getA(fy,cat,id,m){ return (actuals[fy]&&actuals[fy][cat]&&actuals[fy][cat][id]&&actuals[fy][cat][id][m])||0; }
@@ -1106,14 +1228,473 @@ function render(){
   else if(activeView==='income')renderTracker('income');
   else if(activeView==='savings')renderTracker('savings');
   else if(activeView==='committed')renderCommitted();
+  else if(activeView==='plan')renderPlan();
   else if(activeView==='networth')renderNetworth();
 }
 
 /* ══════════════════════════════════════════════
    DASHBOARD
 ══════════════════════════════════════════════ */
+
+
+
+
+/* ══ Annual Report Card ══ */
+function showAnnualReport(){
+  const fy=currentFY;
+  let incT=0, outT=0;
+  const headTotals={};
+  for(let mm=0;mm<12;mm++){
+    incT+=incomeMonthTotal(fy,mm)||0;
+    cpItems.filter(h=>h.active!==false).forEach(h=>{
+      const v=getCpA(fy,h.id,mm);
+      outT+=v;
+      const hd=h.payHead||'Others';
+      headTotals[hd]=(headTotals[hd]||0)+v;
+    });
+  }
+  if(incT===0&&finSettings.monthlyIncome>0) incT=finSettings.monthlyIncome*12;
+  const saved=incT-outT;
+  const sr=incT>0?saved/incT*100:0;
+  const top3=Object.entries(headTotals).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const hist=nwHistory||[];
+  const nwGrowth=hist.length>=2?`${hist[0].label} ${hist[0].tnw} → ${hist[hist.length-1].label} ${hist[hist.length-1].tnw} months of salary`:'Add NW snapshots to track';
+
+  const existing=document.getElementById('arModal');
+  if(existing) existing.remove();
+  const div=document.createElement('div');
+  div.id='arModal';
+  div.style.cssText='position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:20px';
+  div.onclick=e=>{ if(e.target===div) div.remove(); };
+  div.innerHTML=`<div style="background:var(--bg);border-radius:16px;max-width:480px;width:100%;max-height:85vh;overflow-y:auto;padding:26px;box-shadow:0 10px 50px rgba(0,0,0,.3)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-family:Syne,sans-serif;font-size:18px;font-weight:800;color:var(--text)">FY Report Card — ${fy}</div>
+      <button onclick="document.getElementById('arModal').remove()" style="background:transparent;border:none;color:var(--muted);font-size:22px;cursor:pointer">×</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-family:var(--fd)">
+      <div style="background:var(--s1);border-radius:10px;padding:12px">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Earned</div>
+        <div style="font-size:18px;font-weight:700;color:var(--green)">${fmt(incT)}</div></div>
+      <div style="background:var(--s1);border-radius:10px;padding:12px">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Paid out</div>
+        <div style="font-size:18px;font-weight:700;color:var(--red)">${fmt(outT)}</div></div>
+      <div style="background:var(--s1);border-radius:10px;padding:12px">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Saved</div>
+        <div style="font-size:18px;font-weight:700;color:${saved>=0?'var(--green)':'var(--red)'}">${fmt(saved)}</div></div>
+      <div style="background:var(--s1);border-radius:10px;padding:12px">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Savings rate</div>
+        <div style="font-size:18px;font-weight:700;color:${sr>=25?'var(--green)':sr>=15?'var(--yellow)':'var(--red)'}">${incT>0?sr.toFixed(0)+'%':'—'}</div></div>
+    </div>
+    <div style="margin-top:16px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Top 3 payout heads</div>
+      ${top3.length?top3.map(([h,v],i)=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-family:var(--fd);font-size:11px">
+        <span style="color:var(--text)">${i+1}. ${h}</span>
+        <span style="color:var(--muted2);font-weight:600">${fmt(v)}</span>
+      </div>`).join(''):'<div style="font-size:11px;color:var(--muted)">No payouts logged</div>'}
+    </div>
+    <div style="margin-top:16px">
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Net worth journey</div>
+      <div style="font-size:11px;color:var(--text);font-family:var(--fd)">${nwGrowth}</div>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+/* ══ NW Allocation & Velocity ══ */
+function classifyAsset(secName, itemName){
+  const s=(secName+' '+itemName).toLowerCase();
+  if(/equity|stock|share|mf|mutual|elss|demat|zerodha|groww/.test(s)) return 'Equity';
+  if(/real estate|property|house|flat|land|plot/.test(s)) return 'Real Estate';
+  if(/gold|silver|jewel|sgb/.test(s)) return 'Gold';
+  if(/cash|savings ac|bank|fd|fixed dep|liquid|rd/.test(s)) return 'Cash';
+  return 'Debt'; /* PPF, EPF, NPS, bonds, Sukanya etc */
+}
+function editAllocation(){
+  const t=finSettings.targetAllocation||{Equity:50,Debt:25,'Real Estate':15,Gold:5,Cash:5};
+  const eq=parseFloat(prompt('Target Equity %:',t.Equity)||t.Equity)||0;
+  const db=parseFloat(prompt('Target Debt %:',t.Debt)||t.Debt)||0;
+  const re=parseFloat(prompt('Target Real Estate %:',t['Real Estate'])||t['Real Estate'])||0;
+  const gd=parseFloat(prompt('Target Gold %:',t.Gold)||t.Gold)||0;
+  const cs=parseFloat(prompt('Target Cash %:',t.Cash)||t.Cash)||0;
+  finSettings.targetAllocation={Equity:eq,Debt:db,'Real Estate':re,Gold:gd,Cash:cs};
+  saveFinSettings(); save(); renderNWExtras();
+}
+function renderNWExtras(){
+  const aEl=document.getElementById('allocCard');
+  if(aEl){
+    const buckets={Equity:0,Debt:0,'Real Estate':0,Gold:0,Cash:0};
+    (nwSecs||[]).forEach(sec=>(sec.items||[]).forEach(it=>{
+      const cls=classifyAsset(sec.name||'',it.name||'');
+      buckets[cls]=(buckets[cls]||0)+(parseFloat(it.value)||0);
+    }));
+    const total=Object.values(buckets).reduce((a,b)=>a+b,0)||1;
+    const target=finSettings.targetAllocation||{Equity:50,Debt:25,'Real Estate':15,Gold:5,Cash:5};
+    const COLS={Equity:'#2563eb',Debt:'#059669','Real Estate':'#d97706',Gold:'#eab308',Cash:'#6b7280'};
+    aEl.innerHTML=Object.entries(buckets).map(([k,v])=>{
+      const pct=v/total*100;
+      const tgt=target[k]||0;
+      const drift=pct-tgt;
+      const driftLbl=Math.abs(drift)>=5
+        ? `<span style="color:${drift>0?'var(--red)':'var(--accent)'};font-weight:600">${drift>0?'+':''}${drift.toFixed(0)}% vs target</span>`
+        : '<span style="color:var(--green)">on target</span>';
+      return `<div style="margin-top:8px;font-family:var(--fd)">
+        <div style="display:flex;justify-content:space-between;font-size:10px">
+          <span style="color:var(--text)">${k}</span>
+          <span style="color:var(--muted2)">${fmt(v)} · ${pct.toFixed(0)}% <span style="font-size:8px">(tgt ${tgt}%)</span></span>
+        </div>
+        <div style="height:7px;background:var(--s2);border-radius:4px;margin:4px 0 2px;position:relative;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${COLS[k]};border-radius:4px"></div>
+          <div style="position:absolute;left:${tgt}%;top:0;bottom:0;width:1.5px;background:var(--text);opacity:.4"></div>
+        </div>
+        <div style="font-size:8px">${driftLbl}</div>
+      </div>`;
+    }).join('');
+  }
+  const vEl=document.getElementById('velocityCard');
+  if(vEl){
+    const hist=nwHistory||[];
+    if(hist.length<2){
+      vEl.innerHTML='<div style="padding:14px;color:var(--muted);font-size:11px;font-family:var(--fd)">Add at least 2 monthly snapshots in the history below to see growth velocity.</div>';
+    } else {
+      const last=hist[hist.length-1], prev=hist[hist.length-2];
+      const mom=prev.tnw>0?((last.tnw-prev.tnw)/prev.tnw*100):0;
+      const yago=hist.length>=13?hist[hist.length-13]:hist[0];
+      const yoy=yago.tnw>0?((last.tnw-yago.tnw)/yago.tnw*100):0;
+      const momCol=mom>=0?'var(--green)':'var(--red)';
+      const yoyCol=yoy>=0?'var(--green)':'var(--red)';
+      /* Savings contribution estimate: avg monthly savings vs total MoM change */
+      const fy=currentFY,m=currentMonth;
+      const monthlySave=Math.max(0,(incomeMonthTotal(fy,m)||finSettings.monthlyIncome)-cpMonthTotal(fy,m));
+      const momAbsMonths=(last.tnw-prev.tnw); /* in months-of-salary units */
+      vEl.innerHTML=`
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;font-family:var(--fd)">
+          <div><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Month-on-month</div>
+            <div style="font-size:22px;font-weight:800;color:${momCol}">${mom>=0?'+':''}${mom.toFixed(1)}%</div>
+            <div style="font-size:9px;color:var(--muted)">${prev.label} → ${last.label}</div></div>
+          <div><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Year-on-year</div>
+            <div style="font-size:22px;font-weight:800;color:${yoyCol}">${yoy>=0?'+':''}${yoy.toFixed(1)}%</div>
+            <div style="font-size:9px;color:var(--muted)">${yago.label} → ${last.label}</div></div>
+        </div>
+        <div style="font-size:9px;color:var(--muted);margin-top:10px">TNW ${last.tnw} months of salary · Liquid ${last.liquid} months</div>`;
+    }
+  }
+}
+
+/* ══ PLAN & GOALS ══ */
+let goals = LS('fp_goals') || [
+  /* example: {id, name, target, targetYear, linked (₹ saved so far), monthlyContrib} */
+];
+function saveGoals(){ SS('fp_goals',goals); if(typeof save==='function'){} }
+
+function addGoal(){
+  const name=prompt('Goal name (e.g. Child Higher Education):'); if(!name)return;
+  const target=parseFloat(prompt('Target amount (₹):')||'0')||0;
+  const year=parseInt(prompt('Target year (e.g. 2035):')||'2035')||2035;
+  const saved=parseFloat(prompt('Amount already saved for this goal (₹):')||'0')||0;
+  goals.push({id:'g'+Date.now(),name:name.trim(),target,targetYear:year,linked:saved,monthlyContrib:0});
+  saveGoals(); save(); renderPlan();
+}
+function editGoal(id){
+  const g=goals.find(x=>x.id===id); if(!g)return;
+  const name=prompt('Goal name:',g.name); if(name===null)return;
+  const target=parseFloat(prompt('Target amount (₹):',g.target)||g.target)||g.target;
+  const year=parseInt(prompt('Target year:',g.targetYear)||g.targetYear)||g.targetYear;
+  const saved=parseFloat(prompt('Saved so far (₹):',g.linked)||g.linked)||0;
+  g.name=name.trim()||g.name; g.target=target; g.targetYear=year; g.linked=saved;
+  saveGoals(); save(); renderPlan();
+}
+function deleteGoal(id){
+  const g=goals.find(x=>x.id===id); if(!g)return;
+  if(!confirm(`Delete goal "${g.name}"?`))return;
+  goals=goals.filter(x=>x.id!==id);
+  saveGoals(); save(); renderPlan();
+}
+
+function renderPlan(){
+  const fy=currentFY, m=currentMonth;
+  /* ── Retirement ── */
+  const rEl=document.getElementById('retireCard');
+  if(rEl){
+    const annualExp=(avgMonthlyPayout(fy)||cpMonthTotal(fy,m)||0)*12;
+    const corpusNeeded=annualExp*30;
+    const nw=totalNetWorth();
+    const yearsLeft=Math.max(0,(finSettings.retirementAge||60)-(finSettings.currentAge||47));
+    /* Project current NW + savings growth at 10% p.a. */
+    const inc=(incomeMonthTotal(fy,m)||finSettings.monthlyIncome||0)*12;
+    const annualSavings=Math.max(0,inc-annualExp);
+    let projected=nw;
+    for(let y=0;y<yearsLeft;y++){ projected=projected*1.10+annualSavings; }
+    const pct=corpusNeeded>0?Math.min(projected/corpusNeeded*100,200):0;
+    const col=pct>=100?'var(--green)':pct>=70?'var(--yellow)':'var(--red)';
+    rEl.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:8px">
+        <div><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Corpus needed (30× expenses)</div>
+          <div style="font-size:18px;font-weight:700;font-family:var(--fd);color:var(--text)">${corpusNeeded>0?fmt(corpusNeeded):'—'}</div></div>
+        <div><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Projected at age ${finSettings.retirementAge||60}</div>
+          <div style="font-size:18px;font-weight:700;font-family:var(--fd);color:${col}">${fmt(projected)}</div></div>
+        <div><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Readiness</div>
+          <div style="font-size:18px;font-weight:700;font-family:var(--fd);color:${col}">${corpusNeeded>0?pct.toFixed(0)+'%':'—'}</div></div>
+      </div>
+      <div style="height:7px;background:var(--s2);border-radius:4px;margin-top:10px;overflow:hidden">
+        <div style="height:100%;width:${Math.min(pct,100)}%;background:${col};border-radius:4px"></div>
+      </div>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px">Assumes 10% p.a. growth · ${yearsLeft} years to retirement · current NW ${fmt(nw)} + savings ${fmt(annualSavings)}/yr</div>`;
+  }
+  /* ── Goals ── */
+  const gEl=document.getElementById('goalsList');
+  if(gEl){
+    if(!goals.length){
+      gEl.innerHTML='<div style="padding:18px;text-align:center;color:var(--muted);font-size:11px;font-family:var(--fd)">No goals yet. Tap + Add goal to create your first one — e.g. Child Education 2035, Car 2028, Home Upgrade.</div>';
+    } else {
+      const nowYear=new Date().getFullYear();
+      gEl.innerHTML=goals.map(g=>{
+        const yearsLeft=Math.max(0.1,g.targetYear-nowYear);
+        const monthsLeft=yearsLeft*12;
+        const gap=Math.max(0,g.target-g.linked);
+        /* required monthly at 10% p.a. */
+        const r=0.10/12;
+        const reqMonthly=gap>0?gap*r/(Math.pow(1+r,monthsLeft)-1):0;
+        const pct=g.target>0?Math.min(g.linked/g.target*100,100):0;
+        const col=pct>=75?'var(--green)':pct>=40?'var(--yellow)':'var(--accent)';
+        return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="flex:1">
+              <span style="font-weight:600;font-size:12px;color:var(--text)">${g.name}</span>
+              <span style="font-size:10px;color:var(--muted);margin-left:8px">${g.targetYear} · ${yearsLeft.toFixed(0)} yrs</span>
+            </div>
+            <button onclick="editGoal('${g.id}')" style="background:var(--s2);border:1px solid var(--border);color:var(--muted2);border-radius:5px;width:22px;height:22px;cursor:pointer;font-size:10px">✎</button>
+            <button onclick="deleteGoal('${g.id}')" style="background:var(--red-bg);border:1px solid var(--red);color:var(--red);border-radius:5px;width:22px;height:22px;cursor:pointer;font-size:11px">×</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:7px">
+            <div style="flex:1;height:7px;background:var(--s2);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${col}"></div>
+            </div>
+            <span style="font-size:10px;font-family:var(--fd);color:${col};font-weight:600">${pct.toFixed(0)}%</span>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:6px;font-size:9px;color:var(--muted);font-family:var(--fd);flex-wrap:wrap">
+            <span>Saved: <b style="color:var(--text)">${fmt(g.linked)}</b></span>
+            <span>Target: <b style="color:var(--text)">${fmt(g.target)}</b></span>
+            <span>Gap: <b style="color:${gap>0?'var(--red)':'var(--green)'}">${fmt(gap)}</b></span>
+            <span>Need: <b style="color:var(--accent)">${fmt(Math.ceil(reqMonthly))}/mo</b> @10%</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+  /* ── Insurance ── */
+  const iEl=document.getElementById('insuranceCard');
+  if(iEl){
+    const annualInc=(incomeMonthTotal(fy,m)||finSettings.monthlyIncome||0)*12;
+    const reqTerm=annualInc*12;  /* 12× annual income mid-point of 10–15 */
+    const tc=finSettings.termCover||0;
+    const hc=finSettings.healthCover||0;
+    const termPct=reqTerm>0?Math.min(tc/reqTerm*100,150):0;
+    const tCol=termPct>=100?'var(--green)':termPct>=60?'var(--yellow)':'var(--red)';
+    const hCol=hc>=1000000?'var(--green)':hc>=500000?'var(--yellow)':'var(--red)';
+    iEl.innerHTML=`
+      <div style="margin-top:6px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--fd)">
+          <span style="color:var(--muted2)">Term life cover</span>
+          <span style="color:${tCol};font-weight:600">${tc>0?fmt(tc):'Not set'}</span>
+        </div>
+        <div style="height:6px;background:var(--s2);border-radius:3px;margin:5px 0 3px;overflow:hidden">
+          <div style="height:100%;width:${Math.min(termPct,100)}%;background:${tCol}"></div>
+        </div>
+        <div style="font-size:9px;color:var(--muted)">Recommended: ${annualInc>0?fmt(reqTerm):'—'} (12× income) · ${termPct>0?termPct.toFixed(0)+'% covered':''}</div>
+      </div>
+      <div style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;font-family:var(--fd)">
+          <span style="color:var(--muted2)">Health cover</span>
+          <span style="color:${hCol};font-weight:600">${hc>0?fmt(hc):'Not set'}</span>
+        </div>
+        <div style="font-size:9px;color:var(--muted);margin-top:3px">Family floater ₹10L+ recommended for metro</div>
+      </div>
+      <button onclick="editFinSettings()" style="margin-top:10px;background:var(--s2);border:1px solid var(--border2);color:var(--muted2);border-radius:6px;padding:4px 12px;font-size:9px;cursor:pointer;font-family:var(--fd)">⚙ Update covers</button>`;
+  }
+  /* ── Tax ── */
+  const tEl=document.getElementById('taxCard');
+  const tfy=document.getElementById('taxFyLbl');
+  if(tfy) tfy.textContent=fy;
+  if(tEl){
+    /* Auto-derive from committed payouts YTD: Savings head items containing keywords */
+    let s80c=0, nps=0;
+    for(let mm=0;mm<12;mm++){
+      cpItems.filter(h=>h.active!==false).forEach(h=>{
+        const nm=(h.name+' '+(h.sub||'')).toLowerCase();
+        const v=getCpA(fy,h.id,mm);
+        if(/sukanya|ppf|elss|lic|life insurance|tuition|principal/i.test(nm)) s80c+=v;
+        if(/nps/i.test(nm)) nps+=v;
+      });
+    }
+    const LIM80C=150000, LIMNPS=50000;
+    const bar=(used,lim,col)=>{
+      const p=Math.min(used/lim*100,100);
+      return `<div style="height:6px;background:var(--s2);border-radius:3px;margin:5px 0 3px;overflow:hidden">
+        <div style="height:100%;width:${p}%;background:${col}"></div></div>`;
+    };
+    const c80=s80c>=LIM80C?'var(--green)':'var(--accent)';
+    const cN=nps>=LIMNPS?'var(--green)':'var(--accent)';
+    tEl.innerHTML=`
+      <div style="margin-top:6px;font-family:var(--fd)">
+        <div style="display:flex;justify-content:space-between;font-size:10px">
+          <span style="color:var(--muted2)">80C (PPF/Sukanya/ELSS/LIC)</span>
+          <span style="color:${c80};font-weight:600">${fmt(s80c)} / ${fmt(LIM80C)}</span>
+        </div>
+        ${bar(s80c,LIM80C,c80)}
+        <div style="font-size:9px;color:var(--muted)">${s80c>=LIM80C?'✓ Limit fully used':'Remaining: '+fmt(LIM80C-s80c)}</div>
+      </div>
+      <div style="margin-top:12px;font-family:var(--fd)">
+        <div style="display:flex;justify-content:space-between;font-size:10px">
+          <span style="color:var(--muted2)">NPS 80CCD(1B)</span>
+          <span style="color:${cN};font-weight:600">${fmt(nps)} / ${fmt(LIMNPS)}</span>
+        </div>
+        ${bar(nps,LIMNPS,cN)}
+        <div style="font-size:9px;color:var(--muted)">${nps>=LIMNPS?'✓ Limit fully used':'Remaining: '+fmt(LIMNPS-nps)}</div>
+      </div>
+      <div style="font-size:8px;color:var(--muted);margin-top:10px">Auto-detected from committed payouts (old regime). Applies only if on old tax regime.</div>`;
+  }
+  /* ── What-if ── */
+  renderWhatIf(fy,m);
+}
+
+let _wi = {sipDelta:0, expDelta:0, prepay:0};
+function renderWhatIf(fy,m){
+  const el=document.getElementById('whatIfCard');
+  if(!el) return;
+  const inc=(incomeMonthTotal(fy,m)||finSettings.monthlyIncome||0);
+  const exp=cpMonthTotal(fy,m)||avgMonthlyPayout(fy);
+  const baseSavings=Math.max(0,inc-exp);
+  const nw=totalNetWorth();
+
+  function proj(extraMonthly, expCut, prepay){
+    let v=nw-(prepay||0);
+    const monthlySave=baseSavings+extraMonthly+exp*(expCut/100);
+    for(let mth=0;mth<60;mth++){ v=v*(1+0.10/12)+monthlySave; }
+    /* prepay also saves interest — approximate by adding back prepay*loanRate*2.5yr avg */
+    if(prepay>0) v+=prepay*(finSettings.loanRate/100)*2.5;
+    return v;
+  }
+  const base=proj(0,0,0);
+  const cur =proj(_wi.sipDelta, _wi.expDelta, _wi.prepay);
+  const diff=cur-base;
+
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-top:8px;font-family:var(--fd)">
+      <div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Extra monthly SIP</div>
+        <input type="range" min="0" max="50000" step="2500" value="${_wi.sipDelta}"
+          oninput="_wi.sipDelta=+this.value;renderWhatIf(currentFY,currentMonth)" style="width:100%">
+        <div style="font-size:11px;color:var(--accent);font-weight:600">+${fmt(_wi.sipDelta)}/mo</div>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Cut expenses by</div>
+        <input type="range" min="0" max="20" step="1" value="${_wi.expDelta}"
+          oninput="_wi.expDelta=+this.value;renderWhatIf(currentFY,currentMonth)" style="width:100%">
+        <div style="font-size:11px;color:var(--green);font-weight:600">−${_wi.expDelta}%</div>
+      </div>
+      <div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase">One-time loan prepayment</div>
+        <input type="range" min="0" max="2000000" step="100000" value="${_wi.prepay}"
+          oninput="_wi.prepay=+this.value;renderWhatIf(currentFY,currentMonth)" style="width:100%">
+        <div style="font-size:11px;color:#d97706;font-weight:600">${fmt(_wi.prepay)}</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;padding:12px;background:var(--s1);border-radius:9px;display:flex;gap:18px;flex-wrap:wrap;font-family:var(--fd)">
+      <div><div style="font-size:9px;color:var(--muted)">Baseline NW in 5 yrs</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)">${fmt(base)}</div></div>
+      <div><div style="font-size:9px;color:var(--muted)">With changes</div>
+        <div style="font-size:16px;font-weight:700;color:var(--accent)">${fmt(cur)}</div></div>
+      <div><div style="font-size:9px;color:var(--muted)">Impact</div>
+        <div style="font-size:16px;font-weight:700;color:${diff>=0?'var(--green)':'var(--red)'}">${diff>=0?'+':''}${fmt(diff)}</div></div>
+    </div>
+    <div style="font-size:8px;color:var(--muted);margin-top:6px">Assumes 10% p.a. returns compounded monthly. Prepayment interest saving approximated.</div>`;
+}
+
+/* ══ Dashboard vitals ══ */
+function renderVitals(fy,m){
+  /* Savings Rate */
+  const srEl=document.getElementById('savingsRateCard');
+  if(srEl){
+    const inc = incomeMonthTotal(fy,m) || finSettings.monthlyIncome;
+    const out = cpMonthTotal(fy,m);
+    const sr  = inc>0 ? Math.max(-100,(inc-out)/inc*100) : 0;
+    /* YTD */
+    let incY=0, outY=0;
+    for(let mm=0;mm<=m;mm++){ incY+=incomeMonthTotal(fy,mm)||finSettings.monthlyIncome; outY+=cpMonthTotal(fy,mm); }
+    const srY = incY>0 ? (incY-outY)/incY*100 : 0;
+    const col = sr>=25?'var(--green)':sr>=15?'var(--yellow)':'var(--red)';
+    const lbl = sr>=25?'Excellent':sr>=15?'Healthy':sr>=0?'Low — aim 15%+':'Negative!';
+    srEl.innerHTML=`
+      <div style="font-size:26px;font-weight:800;font-family:var(--fd);color:${col};margin:4px 0">${inc>0?sr.toFixed(0)+'%':'—'}</div>
+      <div style="font-size:10px;color:var(--muted2)">${inc>0?lbl:'Set income in ⚙ settings'}</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px">YTD: ${incY>0?srY.toFixed(0)+'%':'—'} · Income ${fmt(inc)} − Payouts ${fmt(out)}</div>`;
+  }
+  /* Emergency Fund */
+  const efEl=document.getElementById('emergencyCard');
+  if(efEl){
+    const liq=liquidNetWorth();
+    const avg=avgMonthlyPayout(fy)||cpMonthTotal(fy,m)||1;
+    const months=liq/avg;
+    const col=months>=6?'var(--green)':months>=3?'var(--yellow)':'var(--red)';
+    const pct=Math.min(months/12*100,100);
+    efEl.innerHTML=`
+      <div style="font-size:26px;font-weight:800;font-family:var(--fd);color:${col};margin:4px 0">${months.toFixed(1)} <span style="font-size:12px;color:var(--muted2)">months</span></div>
+      <div style="height:6px;background:var(--s2);border-radius:3px;margin:6px 0;position:relative;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${col};border-radius:3px"></div>
+        <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--muted)" title="6-month target"></div>
+      </div>
+      <div style="font-size:9px;color:var(--muted)">Liquid ${fmt(liq)} ÷ avg payout ${fmt(avg)}/mo · Target 6–12</div>`;
+  }
+  /* Debt Health */
+  const dEl=document.getElementById('debtCard');
+  if(dEl){
+    const inc=incomeMonthTotal(fy,m)||finSettings.monthlyIncome;
+    const emi=finSettings.loanEMI||0;
+    const ratio=inc>0?emi/inc*100:0;
+    const col=ratio<=36?'var(--green)':ratio<=50?'var(--yellow)':'var(--red)';
+    /* Loan-free date estimate */
+    let loanInfo='';
+    if(finSettings.loanOutstanding>0&&emi>0){
+      const r=finSettings.loanRate/1200;
+      const n=Math.log(emi/(emi-finSettings.loanOutstanding*r))/Math.log(1+r);
+      if(isFinite(n)&&n>0){
+        const end=new Date(); end.setMonth(end.getMonth()+Math.ceil(n));
+        loanInfo=`Loan-free: ${end.toLocaleDateString('en-IN',{month:'short',year:'numeric'})} (~${(n/12).toFixed(1)} yrs)`;
+      }
+    }
+    dEl.innerHTML=`
+      <div style="font-size:26px;font-weight:800;font-family:var(--fd);color:${col};margin:4px 0">${inc>0?ratio.toFixed(0)+'%':'—'}</div>
+      <div style="font-size:10px;color:var(--muted2)">EMI-to-income ${ratio<=36?'· Safe zone':ratio<=50?'· Caution':'· Over-leveraged'}</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:6px">${loanInfo||'Set loan details in ⚙ settings'}</div>
+      <button onclick="editFinSettings()" style="margin-top:6px;background:var(--s2);border:1px solid var(--border2);color:var(--muted2);border-radius:6px;padding:3px 10px;font-size:9px;cursor:pointer;font-family:var(--fd)">⚙ Settings</button>`;
+  }
+  /* Due This Week strip */
+  const dwEl=document.getElementById('dueWeekStrip');
+  if(dwEl){
+    const today=new Date(); const dom=today.getDate();
+    const upcoming=cpItems.filter(h=>h.active!==false)
+      .filter(h=>{
+        const freq=h.freq||'monthly';
+        const dueMonths=CP_FREQ_MONTHS[freq]||CP_FREQ_MONTHS.monthly;
+        const isDue=freq==='once'?(h.startFY===fy&&h.startMonth===m):dueMonths.includes(m);
+        return isDue && h.dayOfMonth>=dom && h.dayOfMonth<dom+7 && !getCpC(fy,h.id,m);
+      })
+      .sort((a,b)=>a.dayOfMonth-b.dayOfMonth);
+    if(upcoming.length){
+      dwEl.innerHTML=`<div style="background:linear-gradient(90deg,rgba(245,158,11,.08),transparent);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:10px;font-weight:700;color:#d97706;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap">⏰ Due next 7 days</span>
+        ${upcoming.map(h=>`<span style="font-size:10px;font-family:var(--fd);color:var(--text);background:var(--s1);border:1px solid var(--border2);border-radius:6px;padding:3px 9px;white-space:nowrap">
+          <b style="color:#d97706">${h.dayOfMonth}${['th','st','nd','rd'][((h.dayOfMonth%100)-20)%10]||'th'}</b> ${h.name} · ${fmt(h.budget||0)}</span>`).join('')}
+      </div>`;
+    } else {
+      dwEl.innerHTML='';
+    }
+  }
+}
+
 function renderDash(){
   const fy=currentFY,m=currentMonth,months=FY_MONTHS[fy];
+  renderVitals(fy,m);
   document.getElementById('dml').innerHTML=`<span style="color:var(--accent)">${months[m]} · ${fy}</span>`;
   document.getElementById('ebml').textContent=months[m];
   const {e:_e,i,s}=mTotals(fy,m);
@@ -1968,6 +2549,7 @@ function addHead(cat){
    NET WORTH
 ══════════════════════════════════════════════ */
 function renderNetworth(){
+  renderNWExtras();
   let totLiq=0,totNW=0;
   nwSecs.forEach(s=>s.assets.forEach(a=>{totLiq+=parseFloat(a.liquid)||0;totNW+=parseFloat(a.networth)||0;}));
   const liqPct=totNW>0?(totLiq/totNW*100):0;
