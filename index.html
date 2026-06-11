@@ -1120,18 +1120,14 @@ function avgMonthlyPayout(fy){
   return n?tot/n:0;
 }
 function liquidNetWorth(){
-  /* Sum NW sections marked liquid-ish: anything except real estate/retirement keywords */
+  /* Assets carry an explicit 'liquid' field — sum it directly */
   let liq=0;
-  (nwSecs||[]).forEach(sec=>{
-    const nm=(sec.name||'').toLowerCase();
-    const isIlliquid=/real estate|property|house|flat|land|epf|ppf|nps|sukanya|retir/i.test(nm);
-    (sec.items||[]).forEach(it=>{ if(!isIlliquid) liq+=(parseFloat(it.value)||0); });
-  });
+  (nwSecs||[]).forEach(sec=>(sec.assets||[]).forEach(a=>{ liq+=(parseFloat(a.liquid)||0); }));
   return liq;
 }
 function totalNetWorth(){
   let t=0;
-  (nwSecs||[]).forEach(sec=>(sec.items||[]).forEach(it=>{ t+=(parseFloat(it.value)||0); }));
+  (nwSecs||[]).forEach(sec=>(sec.assets||[]).forEach(a=>{ t+=(parseFloat(a.networth)||0); }));
   return t;
 }
 
@@ -1174,7 +1170,15 @@ function fyTotals(fy){
 /* ── completion ── */
 function comp(fy,m){
   let done=0,total=0;
-  ['expenses','income','savings'].forEach(cat=>{
+  /* Committed payouts due this month */
+  cpItems.filter(h=>h.active!==false).forEach(h=>{
+    const freq=h.freq||'monthly';
+    const dueMonths=CP_FREQ_MONTHS[freq]||CP_FREQ_MONTHS.monthly;
+    const isDue=freq==='once'?(h.startFY===fy&&h.startMonth===m):dueMonths.includes(m);
+    if(isDue){ total++; if(getCpC(fy,h.id,m)) done++; }
+  });
+  /* Income + savings trackers */
+  ['income','savings'].forEach(cat=>{
     heads[cat].forEach(h=>{total++;if(getC(fy,cat,h.id,m))done++;});
   });
   return{done,total};
@@ -1301,13 +1305,14 @@ function showAnnualReport(){
 }
 
 /* ══ NW Allocation & Velocity ══ */
-function classifyAsset(secName, itemName){
-  const s=(secName+' '+itemName).toLowerCase();
-  if(/equity|stock|share|mf|mutual|elss|demat|zerodha|groww/.test(s)) return 'Equity';
-  if(/real estate|property|house|flat|land|plot/.test(s)) return 'Real Estate';
+function classifyAsset(secLabel, assetType, acct){
+  const s=(secLabel+' '+assetType+' '+(acct||'')).toLowerCase();
+  if(/equity|stock|share|demat/.test(s)) return 'Equity';
+  if(/mf|mutual|elss/.test(s)) return 'Equity';
+  if(/property|real estate|house|flat|land|plot|physical asset/.test(s)) return 'Real Estate';
   if(/gold|silver|jewel|sgb/.test(s)) return 'Gold';
-  if(/cash|savings ac|bank|fd|fixed dep|liquid|rd/.test(s)) return 'Cash';
-  return 'Debt'; /* PPF, EPF, NPS, bonds, Sukanya etc */
+  if(/cash|savings|bank ac\b/.test(s)) return 'Cash';
+  return 'Debt'; /* FD, PPF, EPF, NPS, Sukanya, Gratuity, insurance etc */
 }
 function editAllocation(){
   const t=finSettings.targetAllocation||{Equity:50,Debt:25,'Real Estate':15,Gold:5,Cash:5};
@@ -1323,9 +1328,9 @@ function renderNWExtras(){
   const aEl=document.getElementById('allocCard');
   if(aEl){
     const buckets={Equity:0,Debt:0,'Real Estate':0,Gold:0,Cash:0};
-    (nwSecs||[]).forEach(sec=>(sec.items||[]).forEach(it=>{
-      const cls=classifyAsset(sec.name||'',it.name||'');
-      buckets[cls]=(buckets[cls]||0)+(parseFloat(it.value)||0);
+    (nwSecs||[]).forEach(sec=>(sec.assets||[]).forEach(a=>{
+      const cls=classifyAsset(sec.label||'',a.type||'',a.acct||'');
+      buckets[cls]=(buckets[cls]||0)+(parseFloat(a.networth)||0);
     }));
     const total=Object.values(buckets).reduce((a,b)=>a+b,0)||1;
     const target=finSettings.targetAllocation||{Equity:50,Debt:25,'Real Estate':15,Gold:5,Cash:5};
@@ -1668,10 +1673,21 @@ function renderVitals(fy,m){
       <div style="font-size:9px;color:var(--muted);margin-top:6px">${loanInfo||'Set loan details in ⚙ settings'}</div>
       <button onclick="editFinSettings()" style="margin-top:6px;background:var(--s2);border:1px solid var(--border2);color:var(--muted2);border-radius:6px;padding:3px 10px;font-size:9px;cursor:pointer;font-family:var(--fd)">⚙ Settings</button>`;
   }
-  /* Due This Week strip */
+  /* Due This Week strip + month balance */
   const dwEl=document.getElementById('dueWeekStrip');
   if(dwEl){
     const today=new Date(); const dom=today.getDate();
+    /* Balance still due this month: budget of due-this-month unpaid items */
+    let dueTotal=0, paidTotal=0;
+    cpItems.filter(h=>h.active!==false).forEach(h=>{
+      const freq=h.freq||'monthly';
+      const dueMonths=CP_FREQ_MONTHS[freq]||CP_FREQ_MONTHS.monthly;
+      const isDue=freq==='once'?(h.startFY===fy&&h.startMonth===m):dueMonths.includes(m);
+      if(isDue){
+        if(getCpC(fy,h.id,m)) paidTotal+=(getCpA(fy,h.id,m)||h.budget||0);
+        else dueTotal+=(h.budget||0);
+      }
+    });
     const upcoming=cpItems.filter(h=>h.active!==false)
       .filter(h=>{
         const freq=h.freq||'monthly';
@@ -1680,15 +1696,21 @@ function renderVitals(fy,m){
         return isDue && h.dayOfMonth>=dom && h.dayOfMonth<dom+7 && !getCpC(fy,h.id,m);
       })
       .sort((a,b)=>a.dayOfMonth-b.dayOfMonth);
-    if(upcoming.length){
-      dwEl.innerHTML=`<div style="background:linear-gradient(90deg,rgba(245,158,11,.08),transparent);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    const balanceBanner = dueTotal>0
+      ? `<div style="background:linear-gradient(90deg,rgba(220,38,38,.07),transparent);border:1px solid rgba(220,38,38,.22);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:var(--fd)">
+          <span style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em">Balance due this month</span>
+          <span style="font-size:17px;font-weight:800;color:var(--red)">${fmt(dueTotal)}</span>
+          <span style="font-size:10px;color:var(--muted)">· Paid so far: <b style="color:var(--green)">${fmt(paidTotal)}</b></span>
+        </div>`
+      : `<div style="background:linear-gradient(90deg,rgba(5,150,105,.07),transparent);border:1px solid rgba(5,150,105,.22);border-radius:10px;padding:8px 14px;margin-bottom:10px;font-family:var(--fd);font-size:11px;color:var(--green)">✓ All committed payouts for this month are paid — ${fmt(paidTotal)} settled</div>`;
+    const weekStrip = upcoming.length
+      ? `<div style="background:linear-gradient(90deg,rgba(245,158,11,.08),transparent);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <span style="font-size:10px;font-weight:700;color:#d97706;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap">⏰ Due next 7 days</span>
         ${upcoming.map(h=>`<span style="font-size:10px;font-family:var(--fd);color:var(--text);background:var(--s1);border:1px solid var(--border2);border-radius:6px;padding:3px 9px;white-space:nowrap">
           <b style="color:#d97706">${h.dayOfMonth}${['th','st','nd','rd'][((h.dayOfMonth%100)-20)%10]||'th'}</b> ${h.name} · ${fmt(h.budget||0)}</span>`).join('')}
-      </div>`;
-    } else {
-      dwEl.innerHTML='';
-    }
+      </div>`
+      : '';
+    dwEl.innerHTML = balanceBanner + weekStrip;
   }
 }
 
@@ -2156,6 +2178,10 @@ function cpToggle(fy,id,m){
   const ct=document.getElementById('cpCompTxt');
   if(cb) cb.style.width=(tot?Math.round(d/tot*100):0)+'%';
   if(ct) ct.textContent=`${d}/${tot} paid this month`;
+  /* Refresh sidebar checked counter */
+  const sc=comp(fy,m);
+  const scEl=document.getElementById('sideComp');
+  if(scEl) scEl.textContent=`${sc.done}/${sc.total} checked`;
   renderCpHistory(cpItems.filter(h=>h.active!==false).sort((a,b)=>a.dayOfMonth-b.dayOfMonth), fy);
   save();
 }
