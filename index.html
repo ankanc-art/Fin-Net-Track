@@ -869,7 +869,16 @@ function syncFromCloud(){
       const d=snap.val();
       if(d && d.heads){
         heads=d.heads; budgets=d.budgets; actuals=d.actuals;
-        checks=d.checks; nwSecs=d.nwSecs; nwHistory=d.nwHistory;
+        checks=d.checks;
+        /* GUARD: only adopt cloud NW data if it actually has content —
+           never let an empty cloud copy wipe good local/seed data */
+        if(d.nwSecs && Array.isArray(d.nwSecs) && d.nwSecs.length>0 &&
+           d.nwSecs.some(s=>s.assets && s.assets.length>0)){
+          nwSecs=d.nwSecs;
+        }
+        if(d.nwHistory && Array.isArray(d.nwHistory) && d.nwHistory.length>0){
+          nwHistory=d.nwHistory;
+        }
         if(d.ebdHeads)   ebdHeads=d.ebdHeads;
         if(d.ebdActuals) ebdActuals=d.ebdActuals;
         if(d.ebdChecks)  ebdChecks=d.ebdChecks;
@@ -961,8 +970,8 @@ function importData(){
         if(d.budgets)    budgets=d.budgets;
         if(d.actuals)    actuals=d.actuals;
         if(d.checks)     checks=d.checks;
-        if(d.nwSecs)     nwSecs=d.nwSecs;
-        if(d.nwHistory)  nwHistory=d.nwHistory;
+        if(d.nwSecs && Array.isArray(d.nwSecs) && d.nwSecs.length>0 && d.nwSecs.some(s=>s.assets&&s.assets.length>0)) nwSecs=d.nwSecs;
+        if(d.nwHistory && Array.isArray(d.nwHistory) && d.nwHistory.length>0) nwHistory=d.nwHistory;
         if(d.ebdHeads)   ebdHeads=d.ebdHeads;
         if(d.ebdActuals) ebdActuals=d.ebdActuals;
         if(d.ebdChecks)  ebdChecks=d.ebdChecks;
