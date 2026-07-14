@@ -861,6 +861,7 @@ function save(){
   SS('fp_cp_items',cpItems); SS('fp_cp_actuals',cpActuals); SS('fp_cp_checks',cpChecks);
   SS('fp_fin_settings',finSettings); SS('fp_goals',goals);
   SS('fp_lastsaved',new Date().toISOString());
+  SS('fp_local_ts',String(Date.now()));
   if(fbUser){
     fbDb.ref(DB_ROOT+'/'+fbUser.uid).set(_payload())
       .then(()=>showToast('✓ Saved to cloud ☁'))
@@ -873,57 +874,80 @@ function save(){
 /* Pull from Firebase after sign-in */
 function syncFromCloud(){
   if(!fbUser) return;
-  /* If recovery restored backup data, push it up and skip pulling cloud */
-  if(window._forcePushAfterAuth){
-    window._forcePushAfterAuth=false;
-    fbDb.ref(DB_ROOT+'/'+fbUser.uid).set(_payload())
-      .then(()=>showToast('✓ Restored data backed up to cloud ☁'))
-      .catch(()=>{});
-    return;
-  }
   fbDb.ref(DB_ROOT+'/'+fbUser.uid).once('value')
     .then(snap=>{
       const d=snap.val();
-      if(d && d.heads){
-        heads=d.heads; budgets=d.budgets; actuals=d.actuals;
-        checks=d.checks;
-        /* GUARD: only adopt cloud NW data if it actually has content —
-           never let an empty cloud copy wipe good local/seed data */
-        if(d.nwSecs && Array.isArray(d.nwSecs) && d.nwSecs.length>0 &&
-           d.nwSecs.some(s=>s.assets && s.assets.length>0)){
-          nwSecs=d.nwSecs;
-        }
-        if(d.nwHistory && Array.isArray(d.nwHistory) && d.nwHistory.length>0){
-          nwHistory=d.nwHistory;
-        }
-        if(d.ebdHeads)   ebdHeads=d.ebdHeads;
-        if(d.ebdActuals) ebdActuals=d.ebdActuals;
-        if(d.ebdChecks)  ebdChecks=d.ebdChecks;
-        if(d.cpItems)    cpItems=d.cpItems;
-        if(d.cpActuals)  cpActuals=d.cpActuals;
-        if(d.cpChecks)   cpChecks=d.cpChecks;
-        /* fill any missing slots */
-        FYS.forEach(fy=>{
-          if(!budgets[fy])   budgets[fy]=JSON.parse(JSON.stringify(DEF_BUDGETS));
-          if(!actuals[fy])   actuals[fy]={expenses:{},income:{},savings:{}};
-          ['expenses','income','savings'].forEach(cat=>{
-            if(!actuals[fy][cat]) actuals[fy][cat]={};
-            heads[cat].forEach(h=>{if(!actuals[fy][cat][h.id]) actuals[fy][cat][h.id]=new Array(12).fill(0);});
-          });
-          if(!ebdActuals[fy]) ebdActuals[fy]={};
-          ebdHeads.forEach(h=>{if(!ebdActuals[fy][h.id]) ebdActuals[fy][h.id]=new Array(12).fill(0);});
-          if(!cpActuals[fy]) cpActuals[fy]={};
-          cpItems.forEach(h=>{if(!cpActuals[fy][h.id]) cpActuals[fy][h.id]=new Array(12).fill(0);});
+      const localTs=parseInt(LS('fp_local_ts')||'0',10);
+      const cloudTs=(d&&d._ts)||0;
+      const cloudHasData=!!(d&&d.heads);
+      const cloudNWGood=!!(d&&d.nwSecs&&Array.isArray(d.nwSecs)&&d.nwSecs.some(s=>s.assets&&s.assets.length>0));
+      const localNWGood=!!(nwSecs&&nwSecs.some&&nwSecs.some(s=>s.assets&&s.assets.length>0));
+
+      /* Case 1: cloud empty — first ever sync. Push local up. */
+      if(!cloudHasData){
+        fbDb.ref(DB_ROOT+'/'+fbUser.uid).set(_payload())
+          .then(()=>showToast('✓ Data backed up to cloud ☁'))
+          .catch(()=>{});
+        return;
+      }
+
+      /* Case 2: local is strictly newer (user made changes on this device
+         while offline / before signing in). Push local up. */
+      if(localTs > cloudTs){
+        fbDb.ref(DB_ROOT+'/'+fbUser.uid).set(_payload())
+          .then(()=>showToast('✓ Local changes pushed to cloud ☁'))
+          .catch(()=>{});
+        return;
+      }
+
+      /* Case 3: cloud is newer or equal — adopt cloud (with NW guards). */
+      heads=d.heads; budgets=d.budgets; actuals=d.actuals;
+      checks=d.checks;
+      /* GUARD: never let an empty cloud NW wipe good local data */
+      if(cloudNWGood){
+        nwSecs=d.nwSecs;
+      }
+      if(d.nwHistory && Array.isArray(d.nwHistory) && d.nwHistory.length>0){
+        nwHistory=d.nwHistory;
+      }
+      if(d.ebdHeads)    ebdHeads=d.ebdHeads;
+      if(d.ebdActuals)  ebdActuals=d.ebdActuals;
+      if(d.ebdChecks)   ebdChecks=d.ebdChecks;
+      if(d.cpItems)     cpItems=d.cpItems;
+      if(d.cpActuals)   cpActuals=d.cpActuals;
+      if(d.cpChecks)    cpChecks=d.cpChecks;
+      if(d.finSettings) finSettings=d.finSettings;
+      if(d.goals)       goals=d.goals;
+      /* fill any missing slots */
+      FYS.forEach(fy=>{
+        if(!budgets[fy])   budgets[fy]=JSON.parse(JSON.stringify(DEF_BUDGETS));
+        if(!actuals[fy])   actuals[fy]={expenses:{},income:{},savings:{}};
+        ['expenses','income','savings'].forEach(cat=>{
+          if(!actuals[fy][cat]) actuals[fy][cat]={};
+          heads[cat].forEach(h=>{if(!actuals[fy][cat][h.id]) actuals[fy][cat][h.id]=new Array(12).fill(0);});
         });
-        render();
-        showToast('✓ Synced from cloud ☁');
-      } else {
-        /* First time — push local data up */
-        fbDb.ref(DB_ROOT+'/'+fbUser.uid).set(_payload()).catch(()=>{});
-        showToast('✓ Data backed up to cloud ☁');
+        if(!ebdActuals[fy]) ebdActuals[fy]={};
+        ebdHeads.forEach(h=>{if(!ebdActuals[fy][h.id]) ebdActuals[fy][h.id]=new Array(12).fill(0);});
+        if(!cpActuals[fy]) cpActuals[fy]={};
+        cpItems.forEach(h=>{if(!cpActuals[fy][h.id]) cpActuals[fy][h.id]=new Array(12).fill(0);});
+      });
+      /* persist the adopted cloud data locally so next boot is instant */
+      SS(KEYS.heads,heads); SS(KEYS.budgets,budgets); SS(KEYS.actuals,actuals);
+      SS(KEYS.checks,checks); SS(KEYS.nw,nwSecs); SS(KEYS.nwh,nwHistory);
+      SS('fp_cp_items',cpItems); SS('fp_cp_actuals',cpActuals); SS('fp_cp_checks',cpChecks);
+      SS('fp_fin_settings',finSettings); SS('fp_goals',goals);
+      SS('fp_local_ts',String(cloudTs));
+      render();
+      showToast('✓ Synced from cloud ☁');
+
+      /* Case 3b: cloud NW was empty but local NW is good — repair the cloud copy */
+      if(!cloudNWGood && localNWGood){
+        fbDb.ref(DB_ROOT+'/'+fbUser.uid).set(_payload())
+          .then(()=>showToast('✓ Net worth data restored to cloud ☁'))
+          .catch(()=>{});
       }
     })
-    .catch(()=>{ /* offline — local data already shown */ });
+    .catch(()=>{ /* offline — local data already rendered */ });
 }
 
 /* Auth functions */
@@ -1246,11 +1270,10 @@ function runRecoveryIfNeeded(){
     if(b.cpActuals) cpActuals=JSON.parse(JSON.stringify(b.cpActuals));
     if(b.cpChecks) cpChecks=JSON.parse(JSON.stringify(b.cpChecks));
     SS('fp_recovery_v1_done','1');
-    /* persist locally immediately */
+    /* persist locally immediately — but do NOT stamp fp_local_ts:
+       a freshly-recovered device must never outrank newer cloud data */
     SS(KEYS.nw,nwSecs); SS(KEYS.nwh,nwHistory);
     SS('fp_cp_items',cpItems); SS('fp_cp_actuals',cpActuals); SS('fp_cp_checks',cpChecks);
-    /* force-push to cloud once user is authenticated */
-    window._forcePushAfterAuth = true;
   }
 }
 runRecoveryIfNeeded();
