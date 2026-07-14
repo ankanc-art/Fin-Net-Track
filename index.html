@@ -217,8 +217,56 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
   .kpi-grid,.nw-kpi-row{grid-template-columns:repeat(2,1fr)}
   .row2{grid-template-columns:1fr !important}
   .main{padding:16px 14px}
-  .tbl-head,.tbl-row,.subtotal-row,.total-row{grid-template-columns:1fr 90px 90px 80px 60px 30px;gap:5px}
+  /* Income/Savings tracker rows (not committed — that scrolls) */
+  #view-income .tbl-head,#view-income .tbl-row,#view-income .subtotal-row,#view-income .total-row,
+  #view-savings .tbl-head,#view-savings .tbl-row,#view-savings .subtotal-row,#view-savings .total-row{
+    grid-template-columns:1fr 90px 90px 80px 60px 30px;gap:5px}
   .bi{grid-template-columns:100px 1fr 54px}
+}
+/* ══ MOBILE POLISH (≤768px) — desktop untouched ══ */
+@media(max-width:768px){
+  /* Committed Payouts: full table scrolls horizontally */
+  .cp-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -14px;padding:0 14px}
+  .cp-scroll-inner{min-width:880px}
+  /* Page headers: stack title and buttons */
+  .ph{flex-wrap:wrap;gap:10px}
+  .ph>div:last-child{width:100%;display:flex;gap:8px;flex-wrap:wrap}
+  .pt{font-size:22px}
+  .ps{font-size:10px}
+  /* KPI cards tighter */
+  .kpi{padding:12px 12px}
+  .kpi .kpi-v,.kpi-v{font-size:17px}
+  /* Cards */
+  .card{padding:14px 12px}
+  .ct{font-size:10px}
+  /* Vitals big numbers slightly smaller */
+  #savingsRateCard>div:first-child,#emergencyCard>div:first-child,#debtCard>div:first-child{font-size:22px !important}
+  /* Month bar sticky under top nav for thumb reach */
+  .view-month-bar{position:sticky;top:60px;z-index:50}
+  /* Due-week chips scroll in one line instead of tall wrap */
+  #dueWeekStrip>div{flex-wrap:nowrap !important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #dueWeekStrip>div::-webkit-scrollbar{display:none}
+  /* Add buttons full-width friendly */
+  .add-head-btn{padding:8px 12px;font-size:11px}
+  /* Plan tab: goal meta wraps cleanly */
+  #goalsList{font-size:11px}
+  /* What-if sliders bigger touch targets */
+  #whatIfCard input[type=range]{height:28px}
+  /* NW history bars scroll horizontally */
+  .nw-hist-row{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+  /* Modal fits small screens */
+  #arModal>div{padding:18px !important;max-height:90vh !important}
+  /* Auth overlay card */
+  #authOverlay>div{padding:28px 20px !important}
+  /* Toast above thumb zone */
+  .toast{bottom:70px;right:12px;left:12px;text-align:center}
+}
+/* ══ SMALL PHONES (≤400px) ══ */
+@media(max-width:400px){
+  .kpi-grid,.nw-kpi-row{grid-template-columns:1fr 1fr;gap:8px}
+  .pt{font-size:19px}
+  .main{padding:12px 10px}
+  .cp-scroll{margin:0 -10px;padding:0 10px}
 }
 
 /* ── Mobile top nav bar ── */
@@ -478,7 +526,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
         <div class="comp-txt" id="cpCompTxt"></div>
       </div>
     </div>
-    <!-- column header -->
+    <!-- column header (scrolls horizontally on mobile) -->
+    <div class="cp-scroll"><div class="cp-scroll-inner">
     <div class="tbl-head" style="grid-template-columns:28px 1fr 110px 110px 110px 110px 100px 80px 50px 34px">
       <div style="text-align:center">Due</div>
       <div>Payout</div>
@@ -492,6 +541,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
       <div></div>
     </div>
     <div id="cpRows"></div>
+    </div></div>
     <!-- monthly history panel -->
     <div id="cpHistory" style="margin-top:20px"></div>
   </div>
