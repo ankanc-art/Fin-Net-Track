@@ -235,7 +235,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
 @media(max-width:768px){
   /* Committed Payouts: full table scrolls horizontally */
   .cp-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -14px;padding:0 14px}
-  .cp-scroll-inner{min-width:930px}
+  .cp-scroll-inner{min-width:1030px}
   /* Page headers: stack title and buttons */
   .ph{flex-wrap:wrap;gap:10px}
   .ph>div:last-child{width:100%;display:flex;gap:8px;flex-wrap:wrap}
@@ -538,13 +538,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);font-size:13px
     </div>
     <!-- column header (scrolls horizontally on mobile) -->
     <div class="cp-scroll"><div class="cp-scroll-inner">
-    <div class="tbl-head" style="grid-template-columns:28px 1fr 110px 110px 110px 110px 100px 80px 50px 34px 44px">
+    <div class="tbl-head" style="grid-template-columns:28px 1fr 110px 110px 110px 110px 100px 100px 80px 50px 34px 44px">
       <div style="text-align:center">Due</div>
       <div>Payout</div>
       <div style="text-align:center">Frequency</div>
       <div style="text-align:center">Payout Head</div>
       <div style="text-align:right">Monthly Budget</div>
       <div style="text-align:right">This Month · YTD</div>
+      <div style="text-align:right" title="Amount reimbursed — subtracted from grand totals but kept in head totals">Reimbursed</div>
       <div style="text-align:right">Annual Remaining</div>
       <div style="text-align:right">YTD Used %</div>
       <div style="text-align:center">Actions</div>
@@ -919,7 +920,7 @@ function _payload(){
   return {
     heads,budgets,actuals,checks,nwSecs,nwHistory,
     ebdHeads,ebdActuals,ebdChecks,
-    cpItems,cpActuals,cpChecks,cpExcl,finSettings,goals,
+    cpItems,cpActuals,cpChecks,cpExcl,cpReimb,finSettings,goals,
     _ts:Date.now()
   };
 }
@@ -929,7 +930,7 @@ function save(){
   SS(KEYS.heads,heads); SS(KEYS.budgets,budgets); SS(KEYS.actuals,actuals);
   SS(KEYS.checks,checks); SS(KEYS.nw,nwSecs); SS(KEYS.nwh,nwHistory);
   SS(KEYS.ebdHeads,ebdHeads); SS(KEYS.ebdActuals,ebdActuals); SS(KEYS.ebdChecks,ebdChecks);
-  SS('fp_cp_items',cpItems); SS('fp_cp_actuals',cpActuals); SS('fp_cp_checks',cpChecks); SS('fp_cp_excl',cpExcl);
+  SS('fp_cp_items',cpItems); SS('fp_cp_actuals',cpActuals); SS('fp_cp_checks',cpChecks); SS('fp_cp_excl',cpExcl); SS('fp_cp_reimb',cpReimb);
   SS('fp_fin_settings',finSettings); SS('fp_goals',goals);
   SS('fp_lastsaved',new Date().toISOString());
   SS('fp_local_ts',String(Date.now()));
@@ -988,6 +989,7 @@ function syncFromCloud(){
       if(d.cpActuals)   cpActuals=d.cpActuals;
       if(d.cpChecks)    cpChecks=d.cpChecks;
       if(d.cpExcl)      cpExcl=d.cpExcl;
+      if(d.cpReimb)     cpReimb=d.cpReimb;
       if(d.finSettings) finSettings=d.finSettings;
       if(d.goals)       goals=d.goals;
       /* fill any missing slots */
@@ -1006,7 +1008,7 @@ function syncFromCloud(){
       /* persist the adopted cloud data locally so next boot is instant */
       SS(KEYS.heads,heads); SS(KEYS.budgets,budgets); SS(KEYS.actuals,actuals);
       SS(KEYS.checks,checks); SS(KEYS.nw,nwSecs); SS(KEYS.nwh,nwHistory);
-      SS('fp_cp_items',cpItems); SS('fp_cp_actuals',cpActuals); SS('fp_cp_checks',cpChecks); SS('fp_cp_excl',cpExcl);
+      SS('fp_cp_items',cpItems); SS('fp_cp_actuals',cpActuals); SS('fp_cp_checks',cpChecks); SS('fp_cp_excl',cpExcl); SS('fp_cp_reimb',cpReimb);
       SS('fp_fin_settings',finSettings); SS('fp_goals',goals);
       SS('fp_local_ts',String(cloudTs));
       render();
@@ -1187,6 +1189,8 @@ let cpActuals = LS('fp_cp_actuals') || {};
 let cpChecks  = LS('fp_cp_checks')  || {};
 // cpExcl[fy_id_m] = bool — paid via credit card, exclude from totals (avoids CC duplication)
 let cpExcl    = LS('fp_cp_excl')    || {};
+// cpReimb[fy_id_m] = number — amount reimbursed against this payout (full or part)
+let cpReimb   = LS('fp_cp_reimb')   || {};
 
 FYS.forEach(fy=>{
   if(!cpActuals[fy]) cpActuals[fy]={};
@@ -1213,8 +1217,23 @@ function cpToggleExcl(fy,id,m){
 }
 function getCpX(fy,id,m){ return !!(cpExcl[fy+'_'+id+'_'+m]); }
 function togCpX(fy,id,m){ const k=fy+'_'+id+'_'+m; cpExcl[k]=!cpExcl[k]; save(); }
-/* Effective amount for totals — 0 if excluded (CC duplication) */
-function cpEffA(fy,id,m){ return getCpX(fy,id,m)?0:getCpA(fy,id,m); }
+function getCpR(fy,id,m){ return parseFloat(cpReimb[fy+'_'+id+'_'+m])||0; }
+function setCpR(fy,id,m,v){
+  const k=fy+'_'+id+'_'+m, n=parseFloat(v)||0;
+  if(n>0) cpReimb[k]=n; else delete cpReimb[k];
+  save();
+}
+/* Effective amount for GRAND totals:
+   0 if fully excluded (CC duplication), else actual minus any reimbursement */
+function cpEffA(fy,id,m){
+  if(getCpX(fy,id,m)) return 0;
+  return Math.max(0, getCpA(fy,id,m)-getCpR(fy,id,m));
+}
+/* Total reimbursed across all active items for a month */
+function cpMonthReimb(fy,m){
+  return cpItems.filter(h=>h.active!==false)
+    .reduce((s,h)=>s+(getCpX(fy,h.id,m)?0:Math.min(getCpR(fy,h.id,m),getCpA(fy,h.id,m))),0);
+}
 
 
 /* ══ Financial settings (editable) ══ */
@@ -1861,10 +1880,11 @@ function renderVitals(fy,m){
        Balance to be paid = This month − Paid */
     let thisMonthTotal=0, paidTotal=0;
     cpItems.filter(h=>h.active!==false).forEach(h=>{
-      const v=cpEffA(fy,h.id,m);   /* excluded (CC) items don't count */
+      const v=cpEffA(fy,h.id,m);   /* nets ⊘CC exclusions and reimbursements */
       thisMonthTotal+=v;
       if(getCpC(fy,h.id,m)) paidTotal+=v;
     });
+    const reimbTotal=cpMonthReimb(fy,m);
     const dueTotal=Math.max(0, thisMonthTotal-paidTotal);
     const upcoming=cpItems.filter(h=>h.active!==false)
       .filter(h=>{
@@ -1878,7 +1898,7 @@ function renderVitals(fy,m){
       ? `<div style="background:linear-gradient(90deg,rgba(220,38,38,.07),transparent);border:1px solid rgba(220,38,38,.22);border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:var(--fd)">
           <span style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.06em">Balance to be paid this month</span>
           <span style="font-size:17px;font-weight:800;color:var(--red)">${fmt(dueTotal)}</span>
-          <span style="font-size:10px;color:var(--muted)">· This month: <b style="color:var(--text)">${fmt(thisMonthTotal)}</b> · Paid: <b style="color:var(--green)">${fmt(paidTotal)}</b></span>
+          <span style="font-size:10px;color:var(--muted)">· This month: <b style="color:var(--text)">${fmt(thisMonthTotal)}</b> · Paid: <b style="color:var(--green)">${fmt(paidTotal)}</b>${reimbTotal>0?' · Reimbursed: <b style="color:#0E8A80">'+fmt(reimbTotal)+'</b>':''}</span>
         </div>`
       : thisMonthTotal>0
         ? `<div style="background:linear-gradient(90deg,rgba(5,150,105,.07),transparent);border:1px solid rgba(5,150,105,.22);border-radius:10px;padding:8px 14px;margin-bottom:10px;font-family:var(--fd);font-size:11px;color:var(--green)">✓ All committed payouts for this month are paid — ${fmt(paidTotal)} settled</div>`
@@ -2055,7 +2075,7 @@ function renderCommitted(){
   if(!rowEl) return;
 
   /* 10-column grid: due | name | freq | payHead | budget | actual | diff | pct | actions | check */
-  const GC='28px 1fr 110px 110px 110px 110px 100px 80px 50px 34px 44px';
+  const GC='28px 1fr 110px 110px 110px 110px 100px 100px 80px 50px 34px 44px';
 
   const today=new Date().getDate();
   const freqColors={'monthly':'var(--accent)','quarterly':'#7c3aed','halfyearly':'#ea580c','yearly':'#dc2626'};
@@ -2078,6 +2098,8 @@ function renderCommitted(){
     for(let mm=0;mm<=m;mm++) ytdActual+=getCpA(fy,h.id,mm);
     const isDone = getCpC(fy,h.id,m);
     const isExcl = getCpX(fy,h.id,m);
+    const reimb  = getCpR(fy,h.id,m);
+    const netActual = Math.max(0, monthActual-reimb);
     const p      = annBudget>0?Math.min(ytdActual/annBudget*100,150):0;
     const barCol = ytdActual>annBudget?'var(--red)':'var(--green)';
     const diff   = annBudget-ytdActual;
@@ -2148,6 +2170,16 @@ function renderCommitted(){
           title="Amount paid this month" ${isDueThisMonth?'':'style="opacity:.5"'}>
         <div style="font-size:9px;color:var(--muted);margin-top:2px">YTD: ${fmt(ytdActual)}</div>
       </div>
+      <!-- Reimbursement -->
+      <div style="text-align:right">
+        <input class="num-in" type="number" value="${reimb||''}" placeholder="0"
+          onchange="setCpR('${fy}','${h.id}',${m},this.value);renderCommitted()"
+          title="Amount reimbursed against this payout (full or part)"
+          style="${reimb>0?'border-color:#0E8A80;color:#0E8A80;font-weight:600':''}">
+        <div style="font-size:9px;margin-top:2px;color:${reimb>0?'#0E8A80':'var(--muted)'}">
+          ${reimb>0?'Net '+fmt(netActual):'—'}
+        </div>
+      </div>
       <!-- Diff -->
       <div class="diff-cell" style="color:${dc}">${ds}</div>
       <!-- % -->
@@ -2173,12 +2205,13 @@ function renderCommitted(){
   });
 
   /* Sub-total (only due-this-month items count toward monthly budget) */
-  let annBudTotal=0, ytdTotal=0, monthTotal=0;
+  let annBudTotal=0, ytdTotal=0, monthTotal=0, monthReimbTotal=0;
   sorted.forEach(h=>{
     const dueMonths=CP_FREQ_MONTHS[h.freq||'monthly']||CP_FREQ_MONTHS.monthly;
     annBudTotal+=(h.budget||0)*dueMonths.length;
     for(let mm=0;mm<=m;mm++) ytdTotal+=cpEffA(fy,h.id,mm);
     monthTotal+=cpEffA(fy,h.id,m);
+    if(!getCpX(fy,h.id,m)) monthReimbTotal+=Math.min(getCpR(fy,h.id,m),getCpA(fy,h.id,m));
   });
   const subDiff=annBudTotal-ytdTotal;
   const subDc=subDiff>=0?'var(--green)':'var(--red)';
@@ -2189,6 +2222,7 @@ function renderCommitted(){
     <div></div><div></div>
     <div class="sub-val" style="color:var(--muted2)">${fmt(annBudTotal/12)}<div style="font-size:9px;color:var(--muted)">Ann: ${fmt(annBudTotal)}</div></div>
     <div class="sub-val" style="color:var(--text)">${fmt(monthTotal)}<div style="font-size:9px;color:var(--muted)">YTD: ${fmt(ytdTotal)}</div></div>
+    <div class="sub-val" style="color:${monthReimbTotal>0?'#0E8A80':'var(--muted)'}">${monthReimbTotal>0?fmt(monthReimbTotal):'—'}<div style="font-size:9px;color:var(--muted)">reimbursed</div></div>
     <div class="sub-val" style="color:${subDc}">${subDiff>=0?'+':''}${fmt(Math.abs(subDiff))}</div>
     <div class="sub-val" style="color:${subPctN>100?'var(--red)':subPctN>80?'var(--yellow)':'var(--muted2)'}">${annBudTotal>0?fmtP(subPctN):'—'}</div>
     <div></div><div></div><div></div>
@@ -2196,7 +2230,11 @@ function renderCommitted(){
 
   /* Full-year total */
   let annActFull=0;
-  sorted.forEach(h=>{for(let mm=0;mm<12;mm++) annActFull+=cpEffA(fy,h.id,mm);});
+  let annReimbFull=0;
+  sorted.forEach(h=>{for(let mm=0;mm<12;mm++){
+    annActFull+=cpEffA(fy,h.id,mm);
+    if(!getCpX(fy,h.id,mm)) annReimbFull+=Math.min(getCpR(fy,h.id,mm),getCpA(fy,h.id,mm));
+  }});
   const annDiff=annBudTotal-annActFull;
   html+=`<div class="total-row" style="grid-template-columns:${GC}">
     <div></div>
@@ -2204,6 +2242,7 @@ function renderCommitted(){
     <div></div><div></div>
     <div class="tot-val">${fmt(annBudTotal)}</div>
     <div class="tot-val">${fmt(annActFull)}</div>
+    <div class="tot-val" style="color:${annReimbFull>0?'#0E8A80':'var(--muted)'}">${annReimbFull>0?fmt(annReimbFull):'—'}</div>
     <div class="${annDiff>=0?'tot-diff-ok':'tot-diff-ov'}">${annDiff>=0?'+':''}${fmt(Math.abs(annDiff))}</div>
     <div class="tot-val">${annBudTotal>0?fmtP(annActFull/annBudTotal*100):'—'}</div>
     <div></div><div></div><div></div>
@@ -2268,7 +2307,7 @@ function renderCpHistory(sorted, fy){
     /* Head-wise totals include ALL amounts (true spend per head) */
     const groupMonthTotals=months.map((_,mi)=>items.reduce((s,h)=>s+getCpA(fy,h.id,mi),0));
     /* Grand total uses effective amounts (⊘ items excluded to avoid duplication) */
-    const groupEffTotals=months.map((_,mi)=>items.reduce((s,h)=>s+cpEffA(fy,h.id,mi),0));
+    const groupEffTotals=months.map((_,mi)=>items.reduce((s,h)=>s+cpEffA(fy,h.id,mi),0));  /* nets ⊘CC + reimbursements */
     const groupTotal=groupMonthTotals.reduce((a,b)=>a+b,0);
     groupEffTotals.forEach((v,mi)=>monthGrand[mi]+=v);
     grandTotal+=groupEffTotals.reduce((a,b)=>a+b,0);
@@ -2298,13 +2337,14 @@ function renderCpHistory(sorted, fy){
           const v=getCpA(fy,h.id,mi);
           const paid=getCpC(fy,h.id,mi);
           const excl=getCpX(fy,h.id,mi);
+          const rb=excl?0:getCpR(fy,h.id,mi);
           const bgt=h.budget||0;
           const valCol=excl?'var(--muted)':v===0?'var(--muted)':v>=bgt?'var(--green)':'var(--yellow)';
           const bg=mi===currentMonth?'rgba(37,99,235,.06)':'transparent';
           const border=mi===currentMonth?'border-left:2px solid rgba(37,99,235,.2)':'';
           const deco=excl?'text-decoration:line-through;opacity:.55;':'';
           return `<td style="text-align:right;padding:6px 8px;color:${valCol};background:${bg};${border};${deco}" ${excl?'title="Excluded from totals — paid via credit card"':''}>
-            ${v>0?fmt(v):'—'}${excl?' <span style="color:#7c3aed;font-size:9px">⊘CC</span>':paid?' <span style="color:var(--green);font-size:9px">✓</span>':''}
+            ${v>0?fmt(v):'—'}${excl?' <span style="color:#7c3aed;font-size:9px">⊘CC</span>':rb>0?' <span style="color:#0E8A80;font-size:9px" title="Reimbursed '+fmt(rb)+'">↩</span>':paid?' <span style="color:var(--green);font-size:9px">✓</span>':''}
           </td>`;
         }).join('')}
         <td style="text-align:right;padding:6px 8px;font-weight:600;
@@ -2328,7 +2368,7 @@ function renderCpHistory(sorted, fy){
   /* Grand total */
   html+=`<tr style="background:var(--s3);border-top:2px solid var(--border2)">
     <td style="padding:8px 10px;font-weight:700;font-size:11px;color:var(--text);
-      position:sticky;left:0;background:var(--s3)">Grand Total <span style="font-weight:400;font-size:8px;color:var(--muted)">excl. ⊘CC items</span></td>
+      position:sticky;left:0;background:var(--s3)">Grand Total <span style="font-weight:400;font-size:8px;color:var(--muted)">net of ⊘CC &amp; reimbursements</span></td>
     <td></td>
     ${monthGrand.map((v,mi)=>`<td style="text-align:right;padding:6px 8px;font-weight:700;
       color:${v>0?'var(--text)':'var(--muted)'};
